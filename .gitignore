@@ -1,0 +1,10 @@
+service_account.json
+.env
+*.log
+__pycache__/
+*.pyc
+.processed_rows.json
+.file_hashes.json
+downloads/
+venv/
+.venv/

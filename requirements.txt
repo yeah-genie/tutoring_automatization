@@ -1,0 +1,13 @@
+anthropic>=0.40.0
+gspread>=6.0.0
+google-auth>=2.0.0
+google-api-python-client>=2.0.0
+opencv-python>=4.8.0
+Pillow>=10.0.0
+imagehash>=4.3.0
+numpy>=1.24.0
+requests>=2.31.0
+notion-client>=2.2.0
+PyMuPDF>=1.23.0
+schedule>=1.2.0
+python-dotenv>=1.0.0
