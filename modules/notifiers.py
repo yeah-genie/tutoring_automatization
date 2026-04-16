@@ -126,6 +126,27 @@ class Notifiers:
             f"→ {notion_url}"
         )
 
+    def discord_anomaly_alerts(self, alerts: list):
+        """이상탐지 알림 Discord 전송."""
+        if not alerts:
+            return
+
+        fields = []
+        for a in alerts:
+            severity_icon = "🚨" if a.severity == "critical" else "⚠️"
+            fields.append({
+                "name": f"{severity_icon} {a.student_name} — {a.alert_type}",
+                "value": f"{a.description}\n👉 {a.recommendation}",
+                "inline": False,
+            })
+
+        embed = {
+            "title": "🔍 학습 이상 패턴 감지",
+            "color": 0xED4245 if any(a.severity == "critical" for a in alerts) else 0xFEE75C,
+            "fields": fields[:25],
+        }
+        self.discord("", embeds=[embed])
+
     # ─── KakaoTalk ────────────────────────────────────────────
 
     def kakao(self, text: str):
@@ -143,7 +164,7 @@ class Notifiers:
             r = requests.post(
                 KAKAO_SEND_URL,
                 headers={"Authorization": f"Bearer {config.KAKAO_ACCESS_TOKEN}"},
-                data={"template_object": str(template).replace("'", '"')},
+                data={"template_object": __import__("json").dumps(template, ensure_ascii=False)},
                 timeout=10,
             )
             r.raise_for_status()

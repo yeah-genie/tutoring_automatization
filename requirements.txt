@@ -11,3 +11,6 @@ notion-client>=2.2.0
 PyMuPDF>=1.23.0
 schedule>=1.2.0
 python-dotenv>=1.0.0
+scikit-learn>=1.4.0
+pandas>=2.0.0
+streamlit>=1.32.0

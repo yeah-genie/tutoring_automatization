@@ -3,8 +3,7 @@ service_account.json
 *.log
 __pycache__/
 *.pyc
-.processed_rows.json
-.file_hashes.json
 downloads/
+tutoring.db
 venv/
 .venv/
