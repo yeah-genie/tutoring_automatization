@@ -37,10 +37,9 @@ DB_PATH = "tutoring.db"
 # ─── 구글폼 열 이름 (실제 폼 응답 시트에 맞게 수정) ───────────
 FORM_COLUMNS = {
     "timestamp": "타임스탬프",
-    "student_name": "이름",
-    "subject": "과목",
-    "homework_title": "숙제 제목",
-    "file_links": "파일 업로드",
+    "student_name": "학생",
+    "homework_title": "단원명",
+    "file_links": "숙제 업로드",
 }
 
 # 오답노트 시트 헤더 (append_wrong_answers 순서와 일치해야 함)
