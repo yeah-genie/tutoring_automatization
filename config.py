@@ -43,4 +43,4 @@ FORM_COLUMNS = {
 }
 
 # 오답노트 시트 헤더 (append_wrong_answers 순서와 일치해야 함)
-WRONG_ANSWER_COLUMNS = ["날짜", "학생 이름", "숙제제목", "문제번호", "오답유형", "학생답안", "정답", "피드백"]
+WRONG_ANSWER_COLUMNS = ["학생이름", "문제번호", "정답여부", "오답유형", "첨삭자", "AI해설"]

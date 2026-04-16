@@ -115,23 +115,22 @@ class SheetsMonitor:
 
         rows_to_append = []
         for r in results:
-            if r.get("is_correct"):
-                continue
-            # config.WRONG_ANSWER_COLUMNS 순서와 일치
+            is_correct = r.get("is_correct", False)
+            # config.WRONG_ANSWER_COLUMNS 순서와 일치:
+            # 학생이름, 문제번호, 정답여부, 오답유형, 첨삭자, AI해설
             rows_to_append.append([
-                today,
                 student_name,
-                homework_title,
                 r.get("problem_number", ""),
-                r.get("error_type", ""),
-                r.get("student_answer", ""),
-                r.get("correct_answer", ""),
+                "O" if is_correct else "X",
+                r.get("error_type", "") if not is_correct else "",
+                "AI",
                 r.get("feedback", ""),
             ])
 
         if rows_to_append:
             sheet.append_rows(rows_to_append, value_input_option="USER_ENTERED")
-            logger.info("%s — 오답 %d건 저장", student_name, len(rows_to_append))
+            wrong_count = sum(1 for r in rows_to_append if r[2] == "X")
+            logger.info("%s — 전체 %d문제, 오답 %d건 저장", student_name, len(rows_to_append), wrong_count)
 
     def get_wrong_answer_history(self, student_name: str) -> list[dict]:
         """학생 오답 이력. 컬럼명은 config.WRONG_ANSWER_COLUMNS 기준."""
