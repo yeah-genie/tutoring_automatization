@@ -22,9 +22,6 @@ CLAUDE_MODEL = "claude-opus-4-7"
 # ─── Discord ──────────────────────────────────────────────────
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
 
-# ─── KakaoTalk ────────────────────────────────────────────────
-KAKAO_ACCESS_TOKEN = os.getenv("KAKAO_ACCESS_TOKEN", "")
-
 # ─── Notion ───────────────────────────────────────────────────
 NOTION_TOKEN = os.getenv("NOTION_TOKEN", "")
 NOTION_DATABASE_ID = os.getenv("NOTION_DATABASE_ID", "")

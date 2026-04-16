@@ -61,48 +61,28 @@ pip install -r requirements.txt
 
 ## 4. Discord 웹훅 설정
 
-1. 알림 받을 Discord 서버에서 채널 선택
-2. **채널 편집 → 연동 → 웹훅 → 새 웹훅** 생성
-3. 웹훅 URL 복사
-4. `config.py`의 `DISCORD_WEBHOOK_URL`에 입력
+모든 알림(채점 완료, 주간 리포트, 이상탐지, 월간 리포트 초안 완성)이 Discord로 옵니다.
+
+1. 알림 받을 Discord 서버에서 채널 선택 (예: `#과외-알림` 채널 새로 만들기 추천)
+2. 채널 이름 우클릭 → **채널 편집** → **연동** 탭 → **웹훅** → **새 웹훅** 생성
+3. 웹훅 이름 설정 (예: `TutoringBot`) → **웹훅 URL 복사**
+4. `.env` 파일의 `DISCORD_WEBHOOK_URL`에 붙여넣기
 
 ---
 
-## 5. KakaoTalk 나에게 보내기 토큰 발급
+## 5. Notion 설정
 
-1. [Kakao Developers](https://developers.kakao.com/) 접속 → 내 애플리케이션 → 앱 추가
-2. **플랫폼 → Web** → 사이트 도메인: `http://localhost`
-3. **제품 설정 → 카카오 로그인** → 활성화 ON
-4. **Redirect URI**: `http://localhost`
-5. 아래 URL을 브라우저에서 열어서 인증 후 코드 발급:
-   ```
-   https://kauth.kakao.com/oauth/authorize?client_id=YOUR_REST_API_KEY&redirect_uri=http://localhost&response_type=code
-   ```
-6. 리다이렉트된 URL에서 `code=` 뒤의 값 복사
-7. 아래 명령으로 액세스 토큰 발급:
-   ```bash
-   curl -X POST https://kauth.kakao.com/oauth/token \
-     -d "grant_type=authorization_code" \
-     -d "client_id=YOUR_REST_API_KEY" \
-     -d "redirect_uri=http://localhost" \
-     -d "code=YOUR_CODE"
-   ```
-8. 응답의 `access_token` 값을 `config.py`의 `KAKAO_ACCESS_TOKEN`에 입력
+> 스크린샷에서 보신 Notion의 Google Drive 연결은 Drive 파일을 페이지에 임베드하는 용도예요.
+> 월간 리포트 내용은 Python이 Notion API로 직접 작성합니다 — 별도 설정 불필요.
 
-> **주의:** 액세스 토큰은 만료됩니다. 만료 시 리프레시 토큰으로 갱신이 필요합니다.
-
----
-
-## 6. Notion 설정
-
-### 6-1. 인테그레이션 토큰 발급
+### 5-1. 인테그레이션 토큰 발급
 
 1. [Notion 개발자 페이지](https://www.notion.so/my-integrations) → 새 인테그레이션 생성
 2. 이름: `tutoring-automation` / 연결할 워크스페이스 선택
 3. **저장 → 토큰 복사**
 4. `config.py`의 `NOTION_TOKEN`에 입력
 
-### 6-2. Notion 데이터베이스 생성
+### 5-2. Notion 데이터베이스 생성
 
 1. Notion에서 새 페이지 생성 → **데이터베이스 — 전체 페이지** 선택
 2. 데이터베이스 이름: `수학 과외 리포트`
@@ -122,7 +102,7 @@ pip install -r requirements.txt
 
 ---
 
-## 7. 구글폼 컬럼명 확인
+## 6. 구글폼 컬럼명 확인
 
 `config.py`의 `FORM_COLUMNS`를 실제 구글폼 응답 시트의 열 제목과 맞추세요.
 
@@ -140,7 +120,7 @@ FORM_COLUMNS = {
 
 ---
 
-## 8. 오답노트 시트 컬럼 준비
+## 7. 오답노트 시트 컬럼 준비
 
 스프레드시트의 `오답노트` 시트에 아래 헤더를 1행에 추가하세요:
 
@@ -150,7 +130,7 @@ FORM_COLUMNS = {
 
 ---
 
-## 9. 실행
+## 8. 실행
 
 ```bash
 # 상시 실행 (폴링 + 자동 스케줄)
@@ -168,22 +148,25 @@ python main.py --monthly 홍길동 2025 11
 
 ---
 
-## 10. 주요 파일 구조
+## 9. 주요 파일 구조
 
 ```
 tutoring_automation/
-├── main.py                  ← 실행 진입점
-├── config.py                ← API 키 및 설정 (이 파일 수정)
+├── main.py                     ← 실행 진입점
+├── config.py                   ← 설정 (.env에서 읽음)
+├── .env                        ← API 키 (직접 생성, git 제외)
 ├── requirements.txt
-├── service_account.json     ← Google 서비스 계정 키 (직접 추가)
-├── SETUP.md                 ← 이 가이드
+├── service_account.json        ← Google 서비스 계정 키 (직접 추가)
+├── student_dashboard.py        ← Streamlit 대시보드
 ├── modules/
-│   ├── duplicate_checker.py ← 중복 파일 감지
-│   ├── image_processor.py   ← 이미지 전처리 (OpenCV)
-│   ├── sheets_monitor.py    ← Sheets 폴링 + Drive 다운로드
-│   ├── grader.py            ← Claude Vision 채점
-│   ├── notifiers.py         ← Discord + 카카오톡
-│   └── notion_reporter.py   ← 월간 리포트 Notion 생성
+│   ├── db.py                   ← SQLite 로컬 DB
+│   ├── duplicate_checker.py    ← 중복 파일 감지
+│   ├── image_processor.py      ← 이미지 전처리 (OpenCV)
+│   ├── sheets_monitor.py       ← Sheets 폴링 + Drive 다운로드
+│   ├── grader.py               ← Claude Vision 채점
+│   ├── anomaly_detector.py     ← 학습 이상탐지
+│   ├── notifiers.py            ← Discord 알림
+│   └── notion_reporter.py      ← 월간 리포트 Notion 생성
 └── prompts/
     └── grading_prompt.py    ← 채점/분석/리포트 프롬프트
 ```
