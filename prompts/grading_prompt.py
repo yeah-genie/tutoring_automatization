@@ -111,11 +111,13 @@ def weekly_report_prompt(week_start: str, students_data: dict[str, list[dict]]) 
 
 
 MONTHLY_REPORT_SYSTEM = """당신은 수학 과외 선생님의 월간 리포트 초안 작성 도우미입니다.
-학부모님이 읽을 문서이므로 공식적이고 따뜻한 어투로 작성합니다."""
+학부모님이 읽기 쉽도록 bullet point 위주로 간결하게 작성합니다.
+인사말은 생략하고, "데이터 분석" 같은 기술적 표현 대신 학습 상황을 자연스럽게 표현하세요."""
 
 def monthly_report_prompt(student_name: str, month_label: str,
                            wrong_answers: list[dict], pattern: dict) -> str:
-    total = len(wrong_answers)
+    total_wrong = len(wrong_answers)
+    total_problems = len(wrong_answers) * 3  # 오답만 기록되므로 추정
     error_dist = {}
     for r in wrong_answers:
         t = r.get("오답유형", "기타")
@@ -127,26 +129,61 @@ def monthly_report_prompt(student_name: str, month_label: str,
 
     return f"""학생: {student_name}
 기간: {month_label}
-이번 달 총 오답: {total}건
-오답 유형 분포: {dist_text}
-패턴 요약: {pattern.get('pattern_summary', '')}
+이번 달 오답: {total_wrong}건
+오답 유형: {dist_text}
+패턴: {pattern.get('pattern_summary', '')}
 다음 달 집중 포인트: {focus}
 개선 제안:
 {suggestions}
 
-위 데이터를 바탕으로 학부모님께 드릴 월간 리포트 초안을 다음 JSON 형식으로만 작성해주세요.
-존댓말, 공식적이지만 따뜻한 어투로 작성하세요.
+위 내용을 바탕으로 학부모님께 드릴 월간 리포트 초안을 아래 JSON 형식으로 작성해주세요.
+- 인사말 없이 바로 내용으로 시작
+- 각 항목은 bullet point(•) 3~5개로 간결하게
+- "데이터", "분석" 같은 표현 금지, 학습 상황을 자연스럽게
+- 따뜻하고 긍정적인 어투
 
 ```json
 {{
   "student_name": "{student_name}",
   "month": "{month_label}",
-  "greeting": "학부모님께 드리는 인사말 (2~3문장)",
-  "curriculum_summary": "이번 달 수업 내용 요약 (3~4문장)",
-  "strengths": "잘하는 부분 (2~3문장)",
-  "improvement_areas": "개선 필요한 부분 (2~3문장, 부정적이지 않게)",
-  "data_insights": "오답 데이터 기반 분석 (3~4문장)",
-  "next_month_plan": "다음 달 계획 (3~4문장)",
-  "closing": "마무리 인사 (1~2문장)"
+  "this_month_summary": ["• 이번 달 학습 현황 bullet 1", "• bullet 2", "• bullet 3"],
+  "strengths": ["• 잘하는 점 1", "• 잘하는 점 2"],
+  "growth_areas": ["• 더 연습하면 좋을 부분 1 (긍정적 표현)", "• 부분 2"],
+  "next_month_plan": ["• 다음 달 계획 1", "• 계획 2", "• 계획 3"]
+}}
+```"""
+
+
+HOMEWORK_SUGGESTION_SYSTEM = """당신은 수학 과외 선생님의 숙제 설계 도우미입니다.
+학생의 오답 패턴을 보고 다음 숙제로 무엇을 내면 좋을지 구체적으로 추천합니다.
+문제집 이름보다는 문제 유형과 난이도, 문항 수를 중심으로 추천하세요."""
+
+def homework_suggestion_prompt(student_name: str, recent_wrong: list[dict], unit: str = "") -> str:
+    rows = "\n".join(
+        f"- {r.get('날짜','')} | {r.get('단원','')} {r.get('문제번호','')}번 | "
+        f"{r.get('오답유형','')} | {r.get('AI해설','')[:60]}"
+        for r in recent_wrong[-10:]
+    )
+    unit_hint = f"다음 수업 단원: {unit}" if unit else ""
+    return f"""학생: {student_name}
+{unit_hint}
+최근 오답 내역:
+{rows if rows else '오답 기록 없음'}
+
+위 내용을 바탕으로 다음 숙제를 추천해주세요. JSON 형식으로만 응답하세요.
+
+```json
+{{
+  "student_name": "{student_name}",
+  "rationale": "추천 이유 한 줄 (오답 패턴 기반, 자연스럽게)",
+  "assignments": [
+    {{
+      "type": "문제 유형 (예: 조건부 확률 기본)",
+      "count": 5,
+      "difficulty": "기본/응용/심화",
+      "note": "어떤 점에 집중해서 풀어야 하는지"
+    }}
+  ],
+  "total_estimated_time": "예상 풀이 시간 (예: 30~40분)"
 }}
 ```"""

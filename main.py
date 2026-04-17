@@ -26,7 +26,9 @@ from modules.grader import Grader
 from modules.image_processor import prepare_files_for_grading
 from modules.notifiers import Notifiers
 from modules.notion_reporter import NotionReporter
+from modules.pdf_generator import ExamPDFGenerator
 from modules.sheets_monitor import SheetsMonitor
+from prompts.grading_prompt import HOMEWORK_SUGGESTION_SYSTEM, homework_suggestion_prompt
 
 logging.basicConfig(
     level=logging.INFO,
@@ -85,6 +87,15 @@ def process_new_submissions(
         logger.debug("새 제출 없음")
 
 
+STUDENT_DRIVE_FOLDERS = {
+    "양서연": "17zOlV9g_C9nPvdW7J_g9vzqBZ4gWqs5T",
+    "김준서": "1jlZE4R2LTQZUf8gaheFjEiEfqpRTBBCd",
+    "김하원": "1HWyIePa3oFwdNMeM9wrXJ97YpEif3r3J",
+    "박나인": "12JH_u8YON0ZbLZcMcC_08CQOw7EEO3dg",
+    "엄지후": "1o9MJQyOPrwLk0T6NgfZUNdDBOzA0PMmX",
+}
+
+
 def _process_single_submission(
     submission: dict,
     monitor: SheetsMonitor,
@@ -97,10 +108,10 @@ def _process_single_submission(
     student = submission["student_name"]
     homework = submission["homework_title"]
 
-    # ① Drive 파일 다운로드
+    # ① Drive 파일 다운로드 (새 파일명 형식: YYYYMMDD_학생_단원_페이지.ext)
     downloaded: list[Path] = []
-    for file_id in submission["file_ids"]:
-        path = monitor.download_drive_file(file_id, student)
+    for i, file_id in enumerate(submission["file_ids"], start=1):
+        path = monitor.download_drive_file(file_id, student, unit=homework, page=i)
         if path:
             downloaded.append(path)
 
@@ -159,8 +170,11 @@ def _process_single_submission(
         error_type_counts=error_type_counts,
     )
 
-    # ⑦ Discord 채점 완료 알림
-    notifiers.discord_grading_complete(student, homework, result)
+    # ⑦ Discord 채점 완료 + 해설 알림
+    notifiers.discord_grading_with_explanation(student, homework, result)
+
+    # ⑦-b 숙제 추천 + 시험지 PDF 생성 + Discord 전송
+    _generate_and_send_homework(student, homework, monitor, grader, notifiers)
 
     # ⑧ 이상탐지 실행
     sessions = db.get_sessions(student)
@@ -179,6 +193,68 @@ def _process_single_submission(
             )
 
     logger.info("처리 완료 — %s", student)
+
+
+def _generate_and_send_homework(
+    student: str,
+    unit: str,
+    monitor: SheetsMonitor,
+    grader: Grader,
+    notifiers: Notifiers,
+):
+    """오답 기반 숙제 추천 → 시험지/해설지 PDF → Discord + Drive."""
+    try:
+        import re as _re
+        import anthropic as _anthropic
+
+        # 오답 이력 + 복습 후보
+        wrong_history = monitor.get_wrong_answer_history(student, wrong_only=True)
+        review_candidates = monitor.get_review_candidates(student, limit=2)
+
+        # Claude로 숙제 추천 생성
+        client = _anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
+        hw_resp = client.messages.create(
+            model=config.CLAUDE_MODEL,
+            max_tokens=800,
+            system=HOMEWORK_SUGGESTION_SYSTEM,
+            messages=[{"role": "user", "content": homework_suggestion_prompt(student, wrong_history, unit)}],
+        )
+        raw = hw_resp.content[0].text
+        match = _re.search(r"\{.*\}", raw, _re.DOTALL)
+        suggestion = grader._parse_json_response(raw) if match else {}
+
+        if not suggestion.get("assignments"):
+            logger.warning("숙제 추천 파싱 실패 — PDF 생성 건너뜀")
+            return
+
+        assignments = suggestion["assignments"]
+
+        # 복습 문제 추가
+        if review_candidates:
+            types = ", ".join(set(r.get("오답유형", "") for r in review_candidates if r.get("오답유형")))
+            assignments.append({
+                "type": f"REVIEW — Previous errors ({types or 'mixed'})",
+                "count": len(review_candidates),
+                "difficulty": "Foundation",
+                "note": "Based on recent mistakes — mark cao only",
+            })
+
+        # 숙제 추천 Discord 전송
+        notifiers.discord_homework_suggestion(student, suggestion)
+
+        # PDF 생성
+        gen = ExamPDFGenerator()
+        paths = gen.generate(student, unit, assignments)
+
+        # Drive 업로드 후 Discord 전송
+        paper_url = monitor.upload_pdf_to_student_folder(
+            paths["paper"], student, STUDENT_DRIVE_FOLDERS
+        )
+        notifiers.discord_exam_ready(student, unit, paths["paper"], paths["markscheme"], paper_url or "")
+
+    except Exception as e:
+        logger.error("숙제 PDF 생성 실패 — %s: %s", student, e, exc_info=True)
+        notifiers.discord(f"⚠️ Homework PDF 생성 실패 — {student}\n{e}")
 
 
 def run_weekly_report(monitor: SheetsMonitor, grader: Grader, notifiers: Notifiers):

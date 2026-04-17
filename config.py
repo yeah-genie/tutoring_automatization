@@ -6,7 +6,7 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 # ─── Google API ───────────────────────────────────────────────
 GOOGLE_SERVICE_ACCOUNT_JSON = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON", "service_account.json")
@@ -42,5 +42,8 @@ FORM_COLUMNS = {
     "file_links": "숙제 업로드",
 }
 
-# 오답노트 시트 헤더 (append_wrong_answers 순서와 일치해야 함)
-WRONG_ANSWER_COLUMNS = ["학생이름", "문제번호", "정답여부", "오답유형", "첨삭자", "AI해설"]
+# 오답노트 시트 헤더 — 순서 변경 시 sheets_monitor.append_wrong_answers도 함께 수정
+WRONG_ANSWER_COLUMNS = ["날짜", "학생", "단원", "문제번호", "정답여부", "학생답안", "정답", "오답유형", "AI해설", "숙제추천"]
+
+# 파일 이름 양식: YYYYMMDD_학생이름_단원명_페이지번호.확장자
+FILE_NAME_FORMAT = "{date}_{student}_{unit}_{page:02d}{ext}"
