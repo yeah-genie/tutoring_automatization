@@ -136,67 +136,108 @@ class SheetsMonitor:
             logger.error("Drive 업로드 실패: %s", e)
             return None
 
+    @staticmethod
+    def _make_submission_id(student_name: str, unit: str) -> str:
+        """제출ID 생성: YYYYMMDD_학생이름_단원명"""
+        today = datetime.now().strftime("%Y%m%d")
+        safe_student = re.sub(r"\s+", "", student_name)
+        safe_unit = re.sub(r"\s+", "", unit) if unit else "숙제"
+        return f"{today}_{safe_student}_{safe_unit}"
+
     def append_wrong_answers(self, student_name: str, unit: str, results: list[dict]):
-        """채점 결과를 오답노트 시트에 추가 (전 문제, 오답만 숙제추천 ✅).
-        컬럼 순서: 날짜 / 학생 / 단원 / 문제번호 / 정답여부 / 학생답안 / 정답 / 오답유형 / AI해설 / 숙제추천
+        """채점 결과 중 오답만 오답노트 시트에 추가.
+        컬럼 순서: 제출ID / 문제번호 / 학생답안 / 정답 / 오답유형 / AI해설 / 복습완료
         """
         sheet = self.spreadsheet.worksheet(config.WRONG_ANSWER_SHEET)
-        today = datetime.now().strftime("%Y-%m-%d")
+        submission_id = self._make_submission_id(student_name, unit)
 
         rows_to_append = []
         for r in results:
-            is_correct = r.get("is_correct", False)
-            rows_to_append.append([
-                today,
-                student_name,
-                unit,
-                r.get("problem_number", ""),
-                "O" if is_correct else "X",
-                r.get("student_answer", ""),
-                r.get("correct_answer", ""),
-                r.get("error_type", "") if not is_correct else "",
-                r.get("feedback", ""),
-                "✅" if not is_correct else "",   # 오답만 숙제추천 표시
-            ])
+            if not r.get("is_correct", False):
+                rows_to_append.append([
+                    submission_id,
+                    r.get("problem_number", ""),
+                    r.get("student_answer", ""),
+                    r.get("correct_answer", ""),
+                    r.get("error_type", ""),
+                    r.get("feedback", ""),
+                    "",  # 복습완료 — 처음엔 빈칸
+                ])
 
         if rows_to_append:
             sheet.append_rows(rows_to_append, value_input_option="USER_ENTERED")
-            wrong_count = sum(1 for r in rows_to_append if r[4] == "X")
-            logger.info("%s — 전체 %d문제, 오답 %d건 저장", student_name, len(rows_to_append), wrong_count)
+            logger.info("%s — 오답 %d건 오답노트 저장 (제출ID: %s)", student_name, len(rows_to_append), submission_id)
+        else:
+            logger.info("%s — 오답 없음, 오답노트 저장 생략", student_name)
+
+    def write_submission_record(
+        self, student_name: str, unit: str,
+        total_problems: int, correct_count: int,
+    ):
+        """채점 완료 후 제출기록 시트에 요약 1행 추가.
+        컬럼 순서: 제출ID / 날짜 / 학생 / 단원 / 총문제수 / 정답수 / 오답수
+        """
+        try:
+            sheet = self.spreadsheet.worksheet(config.SUBMISSION_RECORD_SHEET)
+            today = datetime.now().strftime("%Y-%m-%d")
+            submission_id = self._make_submission_id(student_name, unit)
+            wrong_count = total_problems - correct_count
+            sheet.append_rows(
+                [[submission_id, today, student_name, unit, total_problems, correct_count, wrong_count]],
+                value_input_option="USER_ENTERED",
+            )
+            logger.info("제출기록 저장: %s", submission_id)
+        except Exception as e:
+            logger.error("제출기록 저장 실패: %s", e)
+
+    def clear_sheet(self, sheet_name: str):
+        """지정 시트의 헤더(1행)를 제외한 모든 데이터 삭제."""
+        try:
+            sheet = self.spreadsheet.worksheet(sheet_name)
+            all_values = sheet.get_all_values()
+            if len(all_values) > 1:
+                sheet.delete_rows(2, len(all_values))
+                logger.info("%s 시트 데이터 전체 삭제 완료 (%d행)", sheet_name, len(all_values) - 1)
+            else:
+                logger.info("%s 시트 — 삭제할 데이터 없음", sheet_name)
+        except Exception as e:
+            logger.error("시트 삭제 실패 (%s): %s", sheet_name, e)
 
     def get_wrong_answer_history(self, student_name: str, wrong_only: bool = False) -> list[dict]:
-        """학생 전체 이력. wrong_only=True면 오답(X)만 반환."""
+        """학생 오답 이력 반환. 제출ID에 학생이름이 포함된 행만 필터링."""
         sheet = self.spreadsheet.worksheet(config.WRONG_ANSWER_SHEET)
         records = sheet.get_all_records()
-        rows = [r for r in records if r.get("학생", "") == student_name]
-        if wrong_only:
-            rows = [r for r in rows if r.get("정답여부", "") == "X"]
+        # 제출ID 형식: YYYYMMDD_학생이름_단원명
+        safe_student = re.sub(r"\s+", "", student_name)
+        rows = [r for r in records if f"_{safe_student}_" in r.get("제출ID", "")]
         return rows
 
     def get_review_candidates(self, student_name: str, limit: int = 3) -> list[dict]:
-        """복습 문제 후보: 최근 틀린 문제 중 숙제추천 ✅ 된 것 최대 limit개."""
-        wrong = self.get_wrong_answer_history(student_name, wrong_only=True)
-        candidates = [r for r in wrong if r.get("숙제추천", "") == "✅"]
-        return candidates[-limit:]  # 가장 최근 것
+        """복습 미완료 오답 후보 최대 limit개."""
+        wrong = self.get_wrong_answer_history(student_name)
+        candidates = [r for r in wrong if not r.get("복습완료", "")]
+        return candidates[-limit:]
 
     def get_all_students_weekly(self, start_date: str) -> dict[str, list[dict]]:
-        sheet = self.spreadsheet.worksheet(config.WRONG_ANSWER_SHEET)
-        records = sheet.get_all_records()
-        date_col = config.WRONG_ANSWER_COLUMNS[0]
-        name_col = config.WRONG_ANSWER_COLUMNS[1]
-        result: dict[str, list] = {}
-        for r in records:
-            if str(r.get(date_col, ""))[:10] >= start_date:
-                name = r.get(name_col, "Unknown")
-                result.setdefault(name, []).append(r)
-        return result
+        """시작일 이후 제출기록 시트에서 학생별 데이터 집계."""
+        try:
+            sheet = self.spreadsheet.worksheet(config.SUBMISSION_RECORD_SHEET)
+            records = sheet.get_all_records()
+            result: dict[str, list] = {}
+            for r in records:
+                if str(r.get("날짜", ""))[:10] >= start_date:
+                    name = r.get("학생", "Unknown")
+                    result.setdefault(name, []).append(r)
+            return result
+        except Exception as e:
+            logger.error("주간 데이터 조회 실패: %s", e)
+            return {}
 
     def get_monthly_data(self, student_name: str, year: int, month: int) -> list[dict]:
         prefix = f"{year}-{month:02d}"
-        date_col = config.WRONG_ANSWER_COLUMNS[0]
         return [
             r for r in self.get_wrong_answer_history(student_name)
-            if str(r.get(date_col, "")).startswith(prefix)
+            if str(r.get("제출ID", "")).startswith(f"{year}{month:02d}")
         ]
 
     @staticmethod

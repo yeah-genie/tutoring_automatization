@@ -154,8 +154,15 @@ def _process_single_submission(
 
     problems = result.get("problems", [])
 
-    # ⑤ 오답노트 저장 (Sheets)
+    # ⑤ 오답노트 저장 (Sheets — 오답만)
     monitor.append_wrong_answers(student, homework, problems)
+
+    # ⑤-b 제출기록 시트에 요약 저장
+    monitor.write_submission_record(
+        student, homework,
+        total_problems=result.get("total_problems", len(problems)),
+        correct_count=result.get("correct_count", 0),
+    )
 
     # ⑥ 세션 요약 저장 (SQLite — 이상탐지 피처로 사용)
     error_type_counts: dict[str, int] = {}
@@ -311,6 +318,7 @@ def main():
     parser = argparse.ArgumentParser(description="수학 과외 숙제 자동화 시스템")
     parser.add_argument("--once", action="store_true", help="새 제출 한 번만 처리 후 종료")
     parser.add_argument("--weekly", action="store_true", help="주간 리포트 즉시 생성")
+    parser.add_argument("--clear-records", action="store_true", help="제출기록 시트 전체 삭제 후 종료")
     parser.add_argument(
         "--monthly",
         nargs=3,
@@ -334,6 +342,11 @@ def main():
     notion = NotionReporter()
     detector = AnomalyDetector()
     Path(config.DOWNLOAD_DIR).mkdir(exist_ok=True)
+
+    if args.clear_records:
+        monitor.clear_sheet(config.SUBMISSION_RECORD_SHEET)
+        logger.info("제출기록 초기화 완료")
+        return
 
     if args.once:
         process_new_submissions(monitor, grader, dup_checker, notifiers, detector, db)
