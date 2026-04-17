@@ -76,9 +76,8 @@ class SheetsMonitor:
         self, file_id: str, student_name: str,
         unit: str = "", page: int = 1,
     ) -> Path | None:
-        """
-        Drive 파일 → 로컬 다운로드.
-        파일명 형식: YYYYMMDD_학생이름_단원명_페이지.확장자
+        """Drive 파일 → 로컬 다운로드.
+        파일명 형식: YYYYMMDD_HHMMSS_학생이름_단원명_페이지.확장자
         """
         try:
             meta = self.drive.files().get(
@@ -87,10 +86,10 @@ class SheetsMonitor:
             mime = meta.get("mimeType", "")
             suffix = Path(meta.get("name", "")).suffix or MIME_TO_EXT.get(mime, "")
 
-            date_str = datetime.now().strftime("%Y%m%d")
-            safe_student = re.sub(r"[^\w가-힣]", "_", student_name)
-            safe_unit = re.sub(r"[^\w가-힣]", "_", unit) if unit else "숙제"
-            filename = f"{date_str}_{safe_student}_{safe_unit}_{page:02d}{suffix}"
+            now_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+            safe_student = re.sub(r"\s+", "", student_name)
+            safe_unit = re.sub(r"\s+", "", unit) if unit else "숙제"
+            filename = f"{now_str}_{safe_student}_{safe_unit}_{page:02d}{suffix}"
 
             dest = Path(config.DOWNLOAD_DIR) / filename
             if dest.exists():
@@ -113,11 +112,7 @@ class SheetsMonitor:
     def upload_pdf_to_student_folder(
         self, pdf_path: Path, student_name: str, folder_map: dict[str, str]
     ) -> str | None:
-        """
-        PDF를 학생 Drive 폴더에 업로드.
-        folder_map: {"학생이름": "folder_id", ...}
-        Returns: uploaded file URL or None.
-        """
+        """PDF를 학생 Drive 폴더에 업로드. Returns: 파일 URL or None."""
         folder_id = folder_map.get(student_name)
         if not folder_id:
             logger.warning("학생 폴더 없음: %s", student_name)
@@ -136,13 +131,53 @@ class SheetsMonitor:
             logger.error("Drive 업로드 실패: %s", e)
             return None
 
+    def list_drive_folder_contents(self, folder_id: str) -> dict[str, list[dict]]:
+        """Drive 폴더를 재귀 탐색하여 단원별 파일 목록 반환.
+
+        Returns:
+            {단원명: [{"id": ..., "name": ..., "mimeType": ...}]}
+            최상위 직접 파일은 "기타" 키로 묶음.
+        """
+        groups: dict[str, list] = {}
+
+        def _scan(fid: str, unit_name: str):
+            try:
+                page_token = None
+                while True:
+                    kwargs = dict(
+                        q=f"'{fid}' in parents and trashed=false",
+                        fields="nextPageToken, files(id, name, mimeType)",
+                        pageSize=100,
+                    )
+                    if page_token:
+                        kwargs["pageToken"] = page_token
+                    resp = self.drive.files().list(**kwargs).execute()
+                    for item in resp.get("files", []):
+                        mime = item["mimeType"]
+                        if mime == "application/vnd.google-apps.folder":
+                            _scan(item["id"], item["name"])
+                        elif mime.startswith("image/") or mime == "application/pdf":
+                            groups.setdefault(unit_name, []).append({
+                                "id": item["id"],
+                                "name": item["name"],
+                                "mimeType": mime,
+                            })
+                    page_token = resp.get("nextPageToken")
+                    if not page_token:
+                        break
+            except Exception as e:
+                logger.error("Drive 스캔 실패 (%s): %s", fid, e)
+
+        _scan(folder_id, "기타")
+        return groups
+
     @staticmethod
     def _make_submission_id(student_name: str, unit: str) -> str:
-        """제출ID 생성: YYYYMMDD_학생이름_단원명"""
-        today = datetime.now().strftime("%Y%m%d")
+        """제출ID 생성: YYYYMMDD_HHMMSS_학생이름_단원명 (초 단위 포함으로 충돌 방지)"""
+        now = datetime.now().strftime("%Y%m%d_%H%M%S")
         safe_student = re.sub(r"\s+", "", student_name)
         safe_unit = re.sub(r"\s+", "", unit) if unit else "숙제"
-        return f"{today}_{safe_student}_{safe_unit}"
+        return f"{now}_{safe_student}_{safe_unit}"
 
     def append_wrong_answers(self, student_name: str, unit: str, results: list[dict]):
         """채점 결과 중 오답만 오답노트 시트에 추가.
@@ -203,14 +238,20 @@ class SheetsMonitor:
         except Exception as e:
             logger.error("시트 삭제 실패 (%s): %s", sheet_name, e)
 
-    def get_wrong_answer_history(self, student_name: str, wrong_only: bool = False) -> list[dict]:
-        """학생 오답 이력 반환. 제출ID에 학생이름이 포함된 행만 필터링."""
+    def get_wrong_answer_history(self, student_name: str) -> list[dict]:
+        """학생 오답 이력 반환.
+        제출ID 형식: YYYYMMDD_HHMMSS_학생이름_단원명 → 3번째 토큰이 학생이름으로 정확 매칭.
+        """
         sheet = self.spreadsheet.worksheet(config.WRONG_ANSWER_SHEET)
         records = sheet.get_all_records()
-        # 제출ID 형식: YYYYMMDD_학생이름_단원명
         safe_student = re.sub(r"\s+", "", student_name)
-        rows = [r for r in records if f"_{safe_student}_" in r.get("제출ID", "")]
-        return rows
+        result = []
+        for r in records:
+            sid = r.get("제출ID", "")
+            parts = sid.split("_", 3)  # ["YYYYMMDD", "HHMMSS", "학생이름", "단원"]
+            if len(parts) >= 3 and parts[2] == safe_student:
+                result.append(r)
+        return result
 
     def get_review_candidates(self, student_name: str, limit: int = 3) -> list[dict]:
         """복습 미완료 오답 후보 최대 limit개."""
@@ -234,10 +275,11 @@ class SheetsMonitor:
             return {}
 
     def get_monthly_data(self, student_name: str, year: int, month: int) -> list[dict]:
-        prefix = f"{year}-{month:02d}"
+        """특정 년월의 오답 이력 반환. 제출ID 앞 6자리(YYYYMM)로 필터링."""
+        prefix = f"{year}{month:02d}"
         return [
             r for r in self.get_wrong_answer_history(student_name)
-            if str(r.get("제출ID", "")).startswith(f"{year}{month:02d}")
+            if r.get("제출ID", "").startswith(prefix)
         ]
 
     @staticmethod
