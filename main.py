@@ -406,6 +406,17 @@ def main():
         metavar=("학생이름", "연도", "월"),
         help="월간 리포트 초안 생성 (예: --monthly 홍길동 2025 11)",
     )
+    parser.add_argument(
+        "--purge",
+        type=int,
+        metavar="일수",
+        help="N일 이상 된 데이터 삭제 (예: --purge 365)",
+    )
+    parser.add_argument(
+        "--delete-student",
+        metavar="학생이름",
+        help="특정 학생의 모든 데이터 삭제 (잊혀질 권리 대응)",
+    )
     args = parser.parse_args()
 
     logger.info("=== 수학 과외 자동화 시스템 시작 ===")
@@ -422,6 +433,16 @@ def main():
     notion = NotionReporter()
     detector = AnomalyDetector()
     Path(config.DOWNLOAD_DIR).mkdir(exist_ok=True)
+
+    if args.purge:
+        result = db.purge_old_data(retention_days=args.purge)
+        logger.info("데이터 정리 완료 (기준: %d일 이상): %s", args.purge, result)
+        return
+
+    if args.delete_student:
+        result = db.delete_student_data(args.delete_student)
+        logger.info("학생 데이터 삭제 완료 (%s): %s", args.delete_student, result)
+        return
 
     if args.clear_records:
         monitor.clear_sheet(config.SUBMISSION_RECORD_SHEET)

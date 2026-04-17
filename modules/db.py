@@ -13,7 +13,7 @@ SQLite 로컬 데이터베이스 모듈.
 import json
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import config
@@ -232,3 +232,73 @@ class Database:
         import pandas as pd
         with sqlite3.connect(self.db_path) as conn:
             return pd.read_sql(f"SELECT * FROM {table}", conn)
+
+    # ─── 데이터 생애주기 관리 ─────────────────────────────────
+
+    def purge_old_data(self, retention_days: int = 365) -> dict[str, int]:
+        """
+        보존 기간(기본 1년)이 지난 데이터를 삭제한다.
+
+        왜 필요한가:
+          GDPR 제5조(c)는 개인정보를 목적 달성 후 더 이상 보관하지 말 것을 요구.
+          과외 종료 후 학습 데이터를 무한정 보관하면 법적 의무 위반이 될 수 있다.
+
+        Returns:
+          삭제된 행 수 요약 dict
+        """
+        cutoff = (datetime.now() - timedelta(days=retention_days)).isoformat()
+        deleted: dict[str, int] = {}
+
+        with self._conn() as conn:
+            for table, col in [
+                ("sessions", "submitted_at"),
+                ("anomaly_alerts", "detected_at"),
+                ("file_hashes", "registered_at"),
+                ("processed_rows", "processed_at"),
+            ]:
+                cursor = conn.execute(
+                    f"DELETE FROM {table} WHERE {col} < ?", (cutoff,)
+                )
+                deleted[table] = cursor.rowcount
+
+        return deleted
+
+    def delete_student_data(self, student_name: str) -> dict[str, int]:
+        """
+        특정 학생의 모든 데이터를 삭제한다 (잊혀질 권리).
+
+        왜 필요한가:
+          GDPR 제17조는 정보 주체(또는 법정대리인)가 요청하면
+          모든 개인정보를 지체 없이 삭제할 의무를 부여한다.
+          과외 종료 시 부모/학생의 삭제 요청에 대응하기 위한 기능.
+
+        Returns:
+          삭제된 행 수 요약 dict
+        """
+        deleted: dict[str, int] = {}
+
+        with self._conn() as conn:
+            for table in ("sessions", "anomaly_alerts", "file_hashes", "processed_rows"):
+                cursor = conn.execute(
+                    f"DELETE FROM {table} WHERE student_name = ?", (student_name,)
+                )
+                deleted[table] = cursor.rowcount
+
+        return deleted
+
+    def get_data_summary(self) -> dict:
+        """
+        현재 저장된 데이터 현황을 반환한다.
+        어떤 학생의 데이터가 얼마나 오래됐는지 파악하는 데 사용.
+        """
+        with self._conn() as conn:
+            rows = conn.execute(
+                """SELECT student_name,
+                          COUNT(*) as session_count,
+                          MIN(submitted_at) as oldest,
+                          MAX(submitted_at) as latest
+                   FROM sessions
+                   GROUP BY student_name
+                   ORDER BY latest DESC"""
+            ).fetchall()
+            return [dict(r) for r in rows]
