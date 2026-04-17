@@ -49,7 +49,7 @@ DB_PATH = "tutoring.db"
 # ─── 구글폼 열 이름 (실제 폼 응답 시트에 맞게 수정) ───────────
 FORM_COLUMNS = {
     "timestamp": "타임스탬프",
-    "student_name": "학생",
+    "student_name": "학생 이름",
     "homework_title": "단원명",
     "file_links": "숙제 업로드",
 }
