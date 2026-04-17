@@ -11,6 +11,7 @@ from pathlib import Path
 import anthropic
 
 import config
+from modules.anonymizer import Anonymizer
 from modules.image_processor import to_base64
 from prompts.grading_prompt import (
     GRADING_SYSTEM,
@@ -29,6 +30,7 @@ logger = logging.getLogger(__name__)
 class Grader:
     def __init__(self):
         self.client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
+        self._anon = Anonymizer()
 
     def grade_submission(self, image_paths: list[Path]) -> dict:
         """
@@ -76,7 +78,7 @@ class Grader:
                 "improvement_suggestions": [],
             }
 
-        prompt = pattern_analysis_prompt(student_name, wrong_answers)
+        prompt = pattern_analysis_prompt(self._anon.mask(student_name), wrong_answers)
         try:
             response = self.client.messages.create(
                 model=config.CLAUDE_MODEL,
@@ -91,7 +93,7 @@ class Grader:
 
     def generate_weekly_report(self, week_start: str, students_data: dict[str, list[dict]]) -> dict:
         """주간 리포트 생성 (Discord 전송용)."""
-        prompt = weekly_report_prompt(week_start, students_data)
+        prompt = weekly_report_prompt(week_start, self._anon.mask_dict(students_data))
         try:
             response = self.client.messages.create(
                 model=config.CLAUDE_MODEL,
@@ -112,7 +114,7 @@ class Grader:
         pattern: dict,
     ) -> dict:
         """월간 리포트 초안 생성 (Notion 저장용)."""
-        prompt = monthly_report_prompt(student_name, month_label, wrong_answers, pattern)
+        prompt = monthly_report_prompt(self._anon.mask(student_name), month_label, wrong_answers, pattern)
         try:
             response = self.client.messages.create(
                 model=config.CLAUDE_MODEL,

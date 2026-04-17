@@ -3,6 +3,7 @@
 .env.example 을 복사해서 .env 로 만들고 값을 채워주세요.
 """
 
+import json
 import os
 from dotenv import load_dotenv
 
@@ -26,6 +27,16 @@ DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
 # ─── Notion ───────────────────────────────────────────────────
 NOTION_TOKEN = os.getenv("NOTION_TOKEN", "")
 NOTION_DATABASE_ID = os.getenv("NOTION_DATABASE_ID", "")
+
+# ─── 학생 Drive 폴더 ──────────────────────────────────────────
+def _parse_student_folders() -> dict[str, str]:
+    raw = os.getenv("STUDENT_DRIVE_FOLDERS", "{}")
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        return {}
+
+STUDENT_DRIVE_FOLDERS: dict[str, str] = _parse_student_folders()
 
 # ─── 앱 동작 설정 ─────────────────────────────────────────────
 POLLING_INTERVAL_SECONDS = 60

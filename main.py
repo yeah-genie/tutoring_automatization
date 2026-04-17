@@ -22,6 +22,7 @@ import schedule
 
 import config
 from modules.anomaly_detector import AnomalyDetector
+from modules.anonymizer import Anonymizer
 from modules.db import Database
 from modules.duplicate_checker import DuplicateChecker
 from modules.grader import Grader
@@ -56,14 +57,8 @@ def _check_config():
     return True
 
 
-# 학생별 Drive 폴더 ID
-STUDENT_DRIVE_FOLDERS = {
-    "양서연": "17zOlV9g_C9nPvdW7J_g9vzqBZ4gWqs5T",
-    "김준서": "1jlZE4R2LTQZUf8gaheFjEiEfqpRTBBCd",
-    "김하원": "1HWyIePa3oFwdNMeM9wrXJ97YpEif3r3J",
-    "박나인": "12JH_u8YON0ZbLZcMcC_08CQOw7EEO3dg",
-    "엄지후": "1o9MJQyOPrwLk0T6NgfZUNdDBOzA0PMmX",
-}
+# 학생별 Drive 폴더 ID — .env 의 STUDENT_DRIVE_FOLDERS 에서 로드
+STUDENT_DRIVE_FOLDERS = config.STUDENT_DRIVE_FOLDERS
 
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -314,7 +309,7 @@ def _generate_and_send_homework(
             model=config.CLAUDE_MODEL,
             max_tokens=800,
             system=HOMEWORK_SUGGESTION_SYSTEM,
-            messages=[{"role": "user", "content": homework_suggestion_prompt(student, wrong_history, unit)}],
+            messages=[{"role": "user", "content": homework_suggestion_prompt(Anonymizer().mask(student), wrong_history, unit)}],
         )
         raw = hw_resp.content[0].text
         match = _re.search(r"\{.*\}", raw, _re.DOTALL)
