@@ -30,15 +30,54 @@ class Grader:
     def __init__(self):
         self.client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
 
+    BATCH_SIZE = 5  # 한 번에 API에 보내는 최대 이미지 수
+
     def grade_submission(self, image_paths: list[Path]) -> dict:
         """
         한 학생의 제출 파일(이미지 목록)을 채점.
-        여러 이미지를 하나의 요청으로 묶어서 비용 절감.
+        이미지가 많으면 BATCH_SIZE 단위로 나눠 호출 후 결과 병합.
         Returns: 채점 결과 dict
         """
         if not image_paths:
             return {"error": "이미지 없음", "problems": []}
 
+        if len(image_paths) <= self.BATCH_SIZE:
+            return self._grade_batch(image_paths)
+
+        # 배치 분할 채점 후 병합
+        all_problems: list[dict] = []
+        title = ""
+        feedback_parts: list[str] = []
+        quality = "good"
+
+        for i in range(0, len(image_paths), self.BATCH_SIZE):
+            batch = image_paths[i:i + self.BATCH_SIZE]
+            logger.info("배치 채점 %d/%d (이미지 %d개)",
+                        i // self.BATCH_SIZE + 1,
+                        (len(image_paths) - 1) // self.BATCH_SIZE + 1,
+                        len(batch))
+            partial = self._grade_batch(batch)
+            if partial.get("error") and not partial.get("problems"):
+                logger.warning("배치 채점 실패 (건너뜀): %s", partial["error"])
+                continue
+            if not title and partial.get("homework_title"):
+                title = partial["homework_title"]
+            if partial.get("overall_feedback"):
+                feedback_parts.append(partial["overall_feedback"])
+            all_problems.extend(partial.get("problems", []))
+
+        correct = sum(1 for p in all_problems if p.get("is_correct"))
+        return {
+            "homework_title": title,
+            "total_problems": len(all_problems),
+            "correct_count": correct,
+            "overall_feedback": " | ".join(feedback_parts) if feedback_parts else "",
+            "problems": all_problems,
+            "image_quality": quality,
+        }
+
+    def _grade_batch(self, image_paths: list[Path]) -> dict:
+        """이미지 배치 1회 채점."""
         content = []
         for path in image_paths:
             b64, media_type = to_base64(path)

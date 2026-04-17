@@ -21,12 +21,17 @@ os.environ.setdefault("PYTHONHTTPSVERIFY", "0")
 import httplib2
 import gspread
 import google_auth_httplib2
+import requests
+import urllib3
 from google.oauth2.service_account import Credentials
+from google.auth.transport.requests import AuthorizedSession
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 
 import config
 from modules.db import Database
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 logger = logging.getLogger(__name__)
 
@@ -51,13 +56,23 @@ class SheetsMonitor:
             config.GOOGLE_SERVICE_ACCOUNT_JSON, scopes=SCOPES
         )
         self.gc = gspread.authorize(creds)
-        # SSL 검증 비활성화한 httplib2로 Drive 빌드 (서버 환경 자체서명 인증서 우회)
+        # requests 기반 AuthorizedSession으로 Drive 빌드 (httplib2 DNS 캐시 오버플로 우회)
+        self._session = AuthorizedSession(creds)
+        self._session.verify = False
         http = google_auth_httplib2.AuthorizedHttp(
             creds, httplib2.Http(disable_ssl_certificate_validation=True)
         )
         self.drive = build("drive", "v3", http=http)
+        self._creds = creds
         self.spreadsheet = self.gc.open_by_key(config.SPREADSHEET_ID)
         Path(config.DOWNLOAD_DIR).mkdir(exist_ok=True)
+
+    def _fresh_drive(self):
+        """매 호출마다 새 httplib2.Http 인스턴스로 Drive 서비스 생성 (DNS 캐시 오버플로 방지)."""
+        http = google_auth_httplib2.AuthorizedHttp(
+            self._creds, httplib2.Http(disable_ssl_certificate_validation=True)
+        )
+        return build("drive", "v3", http=http)
 
     def get_new_submissions(self) -> Iterator[dict]:
         """처리하지 않은 새 폼 응답을 하나씩 yield."""
@@ -92,7 +107,8 @@ class SheetsMonitor:
         파일명 형식: YYYYMMDD_HHMMSS_학생이름_단원명_페이지.확장자
         """
         try:
-            meta = self.drive.files().get(
+            drive = self._fresh_drive()
+            meta = drive.files().get(
                 fileId=file_id, fields="name,mimeType"
             ).execute()
             mime = meta.get("mimeType", "")
@@ -107,7 +123,7 @@ class SheetsMonitor:
             if dest.exists():
                 return dest
 
-            request = self.drive.files().get_media(fileId=file_id)
+            request = drive.files().get_media(fileId=file_id)
             buf = io.BytesIO()
             downloader = MediaIoBaseDownload(buf, request)
             done = False
@@ -163,7 +179,7 @@ class SheetsMonitor:
                     )
                     if page_token:
                         kwargs["pageToken"] = page_token
-                    resp = self.drive.files().list(**kwargs).execute()
+                    resp = self._fresh_drive().files().list(**kwargs).execute()
                     for item in resp.get("files", []):
                         mime = item["mimeType"]
                         if mime == "application/vnd.google-apps.folder":

@@ -283,7 +283,7 @@ def scan_and_grade_drive_files(
                     monitor, grader, notifiers, detector, db,
                 )
             except Exception as e:
-                logger.error("채점 실패 — %s [%s]: %s", student, unit, e)
+                logger.error("채점 실패 — %s [%s]: %s", student, unit, e, exc_info=True)
                 notifiers.discord(f"❌ Drive 채점 실패 — {student} / {unit}\n{e}")
 
     logger.info("=== Drive 일괄 채점 완료 ===")
