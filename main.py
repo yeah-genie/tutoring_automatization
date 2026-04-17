@@ -194,8 +194,7 @@ def _process_single_submission(
             downloaded.append(path)
 
     if not downloaded:
-        logger.warning("다운로드된 파일 없음 — 건너뜀")
-        return
+        raise RuntimeError("Drive 파일 다운로드 실패 — 파일 없음")
 
     # ② 중복 검사
     valid_files: list[Path] = []

@@ -7,12 +7,20 @@ Google Sheets 모니터링 모듈.
 
 import io
 import logging
+import os
 import re
+import ssl
 from datetime import datetime
 from pathlib import Path
 from typing import Iterator
 
+# 이 서버 환경의 자체서명 프록시 인증서 우회
+ssl._create_default_https_context = ssl._create_unverified_context
+os.environ.setdefault("PYTHONHTTPSVERIFY", "0")
+
+import httplib2
 import gspread
+import google_auth_httplib2
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
@@ -43,7 +51,11 @@ class SheetsMonitor:
             config.GOOGLE_SERVICE_ACCOUNT_JSON, scopes=SCOPES
         )
         self.gc = gspread.authorize(creds)
-        self.drive = build("drive", "v3", credentials=creds)
+        # SSL 검증 비활성화한 httplib2로 Drive 빌드 (서버 환경 자체서명 인증서 우회)
+        http = google_auth_httplib2.AuthorizedHttp(
+            creds, httplib2.Http(disable_ssl_certificate_validation=True)
+        )
+        self.drive = build("drive", "v3", http=http)
         self.spreadsheet = self.gc.open_by_key(config.SPREADSHEET_ID)
         Path(config.DOWNLOAD_DIR).mkdir(exist_ok=True)
 
