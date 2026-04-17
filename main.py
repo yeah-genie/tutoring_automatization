@@ -2,9 +2,11 @@
 수학 과외 숙제 자동화 시스템 — 진입점
 
 실행 방법:
-  python main.py          # 상시 실행 (Sheets 폴링 + 스케줄)
-  python main.py --once   # 새 제출 한 번만 처리 후 종료
-  python main.py --weekly # 주간 리포트 즉시 생성
+  python main.py               # 상시 실행 (Sheets 폴링 + 스케줄)
+  python main.py --once        # 새 제출 한 번만 처리 후 종료
+  python main.py --scan-drive  # 학생 Drive 폴더 기존 파일 전부 채점
+  python main.py --clear-records  # 제출기록 시트 전체 삭제 후 종료
+  python main.py --weekly      # 주간 리포트 즉시 생성
   python main.py --monthly 홍길동 2025 11  # 월간 리포트 초안 생성
   streamlit run student_dashboard.py      # 대시보드 실행
 """
@@ -54,6 +56,92 @@ def _check_config():
     return True
 
 
+# 학생별 Drive 폴더 ID
+STUDENT_DRIVE_FOLDERS = {
+    "양서연": "17zOlV9g_C9nPvdW7J_g9vzqBZ4gWqs5T",
+    "김준서": "1jlZE4R2LTQZUf8gaheFjEiEfqpRTBBCd",
+    "김하원": "1HWyIePa3oFwdNMeM9wrXJ97YpEif3r3J",
+    "박나인": "12JH_u8YON0ZbLZcMcC_08CQOw7EEO3dg",
+    "엄지후": "1o9MJQyOPrwLk0T6NgfZUNdDBOzA0PMmX",
+}
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# 핵심 공통 로직: 채점 → 저장 → Discord → 이상탐지
+# ────────────────────────────────────────────────────────────────────────────
+
+def _grade_files_and_notify(
+    student: str,
+    unit: str,
+    grading_files: list[Path],
+    monitor: SheetsMonitor,
+    grader: Grader,
+    notifiers: Notifiers,
+    detector: AnomalyDetector,
+    db: Database,
+):
+    """채점 → 오답노트/DB 저장 → Discord 알림 → 이상탐지 (전체 학생 대상)."""
+    logger.info("채점 시작 — %s [%s], 파일 %d개", student, unit, len(grading_files))
+    result = grader.grade_submission(grading_files)
+
+    if not result.get("problems") and "error" in result:
+        raise RuntimeError(f"채점 실패: {result['error']}")
+
+    problems = result.get("problems", [])
+
+    # ⑤ 오답노트 저장 (Sheets — 오답만)
+    monitor.append_wrong_answers(student, unit, problems)
+
+    # ⑤-b 제출기록 시트에 요약 저장
+    monitor.write_submission_record(
+        student, unit,
+        total_problems=result.get("total_problems", len(problems)),
+        correct_count=result.get("correct_count", 0),
+    )
+
+    # ⑥ 세션 요약 저장 (SQLite — 이상탐지 피처)
+    error_type_counts: dict[str, int] = {}
+    for p in problems:
+        if not p.get("is_correct") and p.get("error_type"):
+            t = p["error_type"]
+            error_type_counts[t] = error_type_counts.get(t, 0) + 1
+
+    session_id = db.save_session(
+        student_name=student,
+        homework_title=unit,
+        submitted_at=datetime.now().strftime("%Y-%m-%d"),
+        total_problems=result.get("total_problems", len(problems)),
+        correct_count=result.get("correct_count", 0),
+        error_type_counts=error_type_counts,
+    )
+
+    # ⑦ Discord 채점 완료 + 해설 (전체 학생)
+    notifiers.discord_grading_with_explanation(student, unit, result)
+
+    # ⑦-b 숙제 추천 + 시험지 PDF 생성 + Discord 전송
+    _generate_and_send_homework(student, unit, monitor, grader, notifiers)
+
+    # ⑧ 이상탐지
+    sessions = db.get_sessions(student)
+    alerts = detector.detect(student, sessions)
+    if alerts:
+        notifiers.discord_anomaly_alerts(alerts)
+        for a in alerts:
+            db.save_alert(
+                student_name=a.student_name,
+                alert_type=a.alert_type,
+                severity=a.severity,
+                score=a.score,
+                description=a.description,
+                recommendation=a.recommendation,
+                session_id=session_id,
+            )
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# 구글폼 제출 처리 (신규 제출 감지 시)
+# ────────────────────────────────────────────────────────────────────────────
+
 def process_new_submissions(
     monitor: SheetsMonitor,
     grader: Grader,
@@ -79,21 +167,11 @@ def process_new_submissions(
             db.mark_processed(row_num, student, "success")
         except Exception as e:
             logger.error("처리 실패 (행 %d): %s", row_num, e, exc_info=True)
-            # 실패한 행은 'failed' 로 기록 → 나중에 --retry 옵션으로 재처리 가능
             db.mark_processed(row_num, student, "failed")
             notifiers.discord(f"❌ 처리 실패 — {student} / {homework}\n오류: {e}")
 
     if not found_new:
         logger.debug("새 제출 없음")
-
-
-STUDENT_DRIVE_FOLDERS = {
-    "양서연": "17zOlV9g_C9nPvdW7J_g9vzqBZ4gWqs5T",
-    "김준서": "1jlZE4R2LTQZUf8gaheFjEiEfqpRTBBCd",
-    "김하원": "1HWyIePa3oFwdNMeM9wrXJ97YpEif3r3J",
-    "박나인": "12JH_u8YON0ZbLZcMcC_08CQOw7EEO3dg",
-    "엄지후": "1o9MJQyOPrwLk0T6NgfZUNdDBOzA0PMmX",
-}
 
 
 def _process_single_submission(
@@ -108,7 +186,7 @@ def _process_single_submission(
     student = submission["student_name"]
     homework = submission["homework_title"]
 
-    # ① Drive 파일 다운로드 (새 파일명 형식: YYYYMMDD_학생_단원_페이지.ext)
+    # ① Drive 파일 다운로드
     downloaded: list[Path] = []
     for i, file_id in enumerate(submission["file_ids"], start=1):
         path = monitor.download_drive_file(file_id, student, unit=homework, page=i)
@@ -142,58 +220,79 @@ def _process_single_submission(
             notifiers.discord_low_quality(student, processed_path.name, quality_score)
         grading_files.append(processed_path)
 
-    # ④ Claude Vision 채점
-    logger.info("채점 시작 — %s, 파일 %d개", student, len(grading_files))
-    result = grader.grade_submission(grading_files)
-
-    if not result.get("problems") and "error" in result:
-        raise RuntimeError(f"채점 실패: {result['error']}")
-
-    problems = result.get("problems", [])
-
-    # ⑤ 오답노트 저장 (Sheets)
-    monitor.append_wrong_answers(student, homework, problems)
-
-    # ⑥ 세션 요약 저장 (SQLite — 이상탐지 피처로 사용)
-    error_type_counts: dict[str, int] = {}
-    for p in problems:
-        if not p.get("is_correct") and p.get("error_type"):
-            t = p["error_type"]
-            error_type_counts[t] = error_type_counts.get(t, 0) + 1
-
-    session_id = db.save_session(
-        student_name=student,
-        homework_title=homework,
-        submitted_at=datetime.now().strftime("%Y-%m-%d"),
-        total_problems=result.get("total_problems", len(problems)),
-        correct_count=result.get("correct_count", 0),
-        error_type_counts=error_type_counts,
-    )
-
-    # ⑦ Discord 채점 완료 + 해설 알림
-    notifiers.discord_grading_with_explanation(student, homework, result)
-
-    # ⑦-b 숙제 추천 + 시험지 PDF 생성 + Discord 전송
-    _generate_and_send_homework(student, homework, monitor, grader, notifiers)
-
-    # ⑧ 이상탐지 실행
-    sessions = db.get_sessions(student)
-    alerts = detector.detect(student, sessions)
-    if alerts:
-        notifiers.discord_anomaly_alerts(alerts)
-        for a in alerts:
-            db.save_alert(
-                student_name=a.student_name,
-                alert_type=a.alert_type,
-                severity=a.severity,
-                score=a.score,
-                description=a.description,
-                recommendation=a.recommendation,
-                session_id=session_id,
-            )
-
+    # ④–⑧ 채점 + 저장 + Discord + 이상탐지
+    _grade_files_and_notify(student, homework, grading_files, monitor, grader, notifiers, detector, db)
     logger.info("처리 완료 — %s", student)
 
+
+# ────────────────────────────────────────────────────────────────────────────
+# Drive 기존 파일 일괄 채점 (--scan-drive)
+# ────────────────────────────────────────────────────────────────────────────
+
+def scan_and_grade_drive_files(
+    monitor: SheetsMonitor,
+    grader: Grader,
+    dup_checker: DuplicateChecker,
+    notifiers: Notifiers,
+    detector: AnomalyDetector,
+    db: Database,
+):
+    """학생 Drive 폴더의 기존 파일을 전부 채점하여 오답노트 업데이트."""
+    logger.info("=== Drive 일괄 채점 시작 ===")
+    for student, folder_id in STUDENT_DRIVE_FOLDERS.items():
+        logger.info("Drive 스캔 — %s (폴더: %s)", student, folder_id)
+
+        # 단원별 파일 목록 (서브폴더명 = 단원명)
+        file_groups = monitor.list_drive_folder_contents(folder_id)
+
+        if not file_groups:
+            logger.info("%s — Drive 파일 없음", student)
+            continue
+
+        for unit, file_infos in file_groups.items():
+            # 다운로드
+            downloaded: list[Path] = []
+            for i, fi in enumerate(file_infos, start=1):
+                path = monitor.download_drive_file(fi["id"], student, unit=unit, page=i)
+                if path:
+                    downloaded.append(path)
+
+            if not downloaded:
+                continue
+
+            # 중복 제거
+            valid_files: list[Path] = []
+            for path in downloaded:
+                is_dup, reason = dup_checker.is_duplicate(path, student)
+                if is_dup:
+                    logger.info("중복 제외: %s", path.name)
+                else:
+                    dup_checker.register(path, student)
+                    valid_files.append(path)
+
+            if not valid_files:
+                logger.info("%s [%s] — 새 파일 없음 (모두 중복)", student, unit)
+                continue
+
+            # 이미지 전처리
+            prepared = prepare_files_for_grading(valid_files)
+            grading_files = [p for p, _ in prepared]
+
+            try:
+                _grade_files_and_notify(
+                    student, unit, grading_files,
+                    monitor, grader, notifiers, detector, db,
+                )
+            except Exception as e:
+                logger.error("채점 실패 — %s [%s]: %s", student, unit, e)
+                notifiers.discord(f"❌ Drive 채점 실패 — {student} / {unit}\n{e}")
+
+    logger.info("=== Drive 일괄 채점 완료 ===")
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# 숙제 추천 + PDF 생성
+# ────────────────────────────────────────────────────────────────────────────
 
 def _generate_and_send_homework(
     student: str,
@@ -207,11 +306,9 @@ def _generate_and_send_homework(
         import re as _re
         import anthropic as _anthropic
 
-        # 오답 이력 + 복습 후보
-        wrong_history = monitor.get_wrong_answer_history(student, wrong_only=True)
+        wrong_history = monitor.get_wrong_answer_history(student)
         review_candidates = monitor.get_review_candidates(student, limit=2)
 
-        # Claude로 숙제 추천 생성
         client = _anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
         hw_resp = client.messages.create(
             model=config.CLAUDE_MODEL,
@@ -229,7 +326,6 @@ def _generate_and_send_homework(
 
         assignments = suggestion["assignments"]
 
-        # 복습 문제 추가
         if review_candidates:
             types = ", ".join(set(r.get("오답유형", "") for r in review_candidates if r.get("오답유형")))
             assignments.append({
@@ -239,14 +335,11 @@ def _generate_and_send_homework(
                 "note": "Based on recent mistakes — mark cao only",
             })
 
-        # 숙제 추천 Discord 전송
         notifiers.discord_homework_suggestion(student, suggestion)
 
-        # PDF 생성
         gen = ExamPDFGenerator()
         paths = gen.generate(student, unit, assignments)
 
-        # Drive 업로드 후 Discord 전송
         paper_url = monitor.upload_pdf_to_student_folder(
             paths["paper"], student, STUDENT_DRIVE_FOLDERS
         )
@@ -256,6 +349,10 @@ def _generate_and_send_homework(
         logger.error("숙제 PDF 생성 실패 — %s: %s", student, e, exc_info=True)
         notifiers.discord(f"⚠️ Homework PDF 생성 실패 — {student}\n{e}")
 
+
+# ────────────────────────────────────────────────────────────────────────────
+# 리포트
+# ────────────────────────────────────────────────────────────────────────────
 
 def run_weekly_report(monitor: SheetsMonitor, grader: Grader, notifiers: Notifiers):
     week_start = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
@@ -298,9 +395,15 @@ def run_monthly_report(
     logger.info("Notion 초안 생성 완료: %s", notion_url)
 
 
+# ────────────────────────────────────────────────────────────────────────────
+# 진입점
+# ────────────────────────────────────────────────────────────────────────────
+
 def main():
     parser = argparse.ArgumentParser(description="수학 과외 숙제 자동화 시스템")
     parser.add_argument("--once", action="store_true", help="새 제출 한 번만 처리 후 종료")
+    parser.add_argument("--scan-drive", action="store_true", help="학생 Drive 폴더 기존 파일 전부 채점")
+    parser.add_argument("--clear-records", action="store_true", help="제출기록 시트 전체 삭제 후 종료")
     parser.add_argument("--weekly", action="store_true", help="주간 리포트 즉시 생성")
     parser.add_argument(
         "--monthly",
@@ -316,7 +419,6 @@ def main():
         logger.error(".env 파일 설정을 완료한 후 다시 실행해주세요.")
         sys.exit(1)
 
-    # 공유 인스턴스 초기화
     db = Database()
     monitor = SheetsMonitor(db)
     grader = Grader()
@@ -325,6 +427,15 @@ def main():
     notion = NotionReporter()
     detector = AnomalyDetector()
     Path(config.DOWNLOAD_DIR).mkdir(exist_ok=True)
+
+    if args.clear_records:
+        monitor.clear_sheet(config.SUBMISSION_RECORD_SHEET)
+        logger.info("제출기록 초기화 완료")
+        return
+
+    if args.scan_drive:
+        scan_and_grade_drive_files(monitor, grader, dup_checker, notifiers, detector, db)
+        return
 
     if args.once:
         process_new_submissions(monitor, grader, dup_checker, notifiers, detector, db)

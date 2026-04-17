@@ -14,6 +14,7 @@ SPREADSHEET_ID = os.getenv("SPREADSHEET_ID", "")
 
 FORM_RESPONSE_SHEET = "설문지 응답 시트1"
 WRONG_ANSWER_SHEET = "오답노트"
+SUBMISSION_RECORD_SHEET = "제출기록"
 
 # ─── Claude API ───────────────────────────────────────────────
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
@@ -42,8 +43,11 @@ FORM_COLUMNS = {
     "file_links": "숙제 업로드",
 }
 
-# 오답노트 시트 헤더 — 순서 변경 시 sheets_monitor.append_wrong_answers도 함께 수정
-WRONG_ANSWER_COLUMNS = ["날짜", "학생", "단원", "문제번호", "정답여부", "학생답안", "정답", "오답유형", "AI해설", "숙제추천"]
+# 오답노트 시트 헤더 — 실제 시트 컬럼 순서와 일치해야 함
+WRONG_ANSWER_COLUMNS = ["제출ID", "문제번호", "학생답안", "정답", "오답유형", "AI해설", "복습완료"]
+
+# 제출기록 시트 헤더
+SUBMISSION_RECORD_COLUMNS = ["제출ID", "날짜", "학생", "단원", "총문제수", "정답수", "오답수"]
 
 # 파일 이름 양식: YYYYMMDD_학생이름_단원명_페이지번호.확장자
 FILE_NAME_FORMAT = "{date}_{student}_{unit}_{page:02d}{ext}"
