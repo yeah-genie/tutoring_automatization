@@ -81,7 +81,8 @@ def process_new_submissions(
             logger.error("처리 실패 (행 %d): %s", row_num, e, exc_info=True)
             # 실패한 행은 'failed' 로 기록 → 나중에 --retry 옵션으로 재처리 가능
             db.mark_processed(row_num, student, "failed")
-            notifiers.discord(f"❌ 처리 실패 — {student} / {homework}\n오류: {e}")
+            if student == "박나인":
+                notifiers.discord(f"❌ 처리 실패 — {student} / {homework}\n오류: {e}")
 
     if not found_new:
         logger.debug("새 제출 없음")
@@ -107,6 +108,7 @@ def _process_single_submission(
 ):
     student = submission["student_name"]
     homework = submission["homework_title"]
+    discord_enabled = (student == "박나인")
 
     # ① Drive 파일 다운로드 (새 파일명 형식: YYYYMMDD_학생_단원_페이지.ext)
     downloaded: list[Path] = []
@@ -125,7 +127,8 @@ def _process_single_submission(
         is_dup, reason = dup_checker.is_duplicate(path, student)
         if is_dup:
             logger.info("중복 제외: %s — %s", path.name, reason)
-            notifiers.discord_duplicate_detected(student, path.name, reason)
+            if discord_enabled:
+                notifiers.discord_duplicate_detected(student, path.name, reason)
         else:
             dup_checker.register(path, student)
             valid_files.append(path)
@@ -138,7 +141,7 @@ def _process_single_submission(
     prepared = prepare_files_for_grading(valid_files)
     grading_files: list[Path] = []
     for processed_path, quality_score in prepared:
-        if quality_score < config.MIN_IMAGE_QUALITY_SCORE:
+        if quality_score < config.MIN_IMAGE_QUALITY_SCORE and discord_enabled:
             notifiers.discord_low_quality(student, processed_path.name, quality_score)
         grading_files.append(processed_path)
 
@@ -170,17 +173,19 @@ def _process_single_submission(
         error_type_counts=error_type_counts,
     )
 
-    # ⑦ Discord 채점 완료 + 해설 알림
-    notifiers.discord_grading_with_explanation(student, homework, result)
+    # ⑦ Discord 채점 완료 + 해설 알림 (박나인만)
+    if discord_enabled:
+        notifiers.discord_grading_with_explanation(student, homework, result)
 
-    # ⑦-b 숙제 추천 + 시험지 PDF 생성 + Discord 전송
-    _generate_and_send_homework(student, homework, monitor, grader, notifiers)
+    # ⑦-b 숙제 추천 + 시험지 PDF 생성 + Discord 전송 (박나인만)
+    _generate_and_send_homework(student, homework, monitor, grader, notifiers, discord_enabled=discord_enabled)
 
     # ⑧ 이상탐지 실행
     sessions = db.get_sessions(student)
     alerts = detector.detect(student, sessions)
     if alerts:
-        notifiers.discord_anomaly_alerts(alerts)
+        if discord_enabled:
+            notifiers.discord_anomaly_alerts(alerts)
         for a in alerts:
             db.save_alert(
                 student_name=a.student_name,
@@ -201,6 +206,7 @@ def _generate_and_send_homework(
     monitor: SheetsMonitor,
     grader: Grader,
     notifiers: Notifiers,
+    discord_enabled: bool = True,
 ):
     """오답 기반 숙제 추천 → 시험지/해설지 PDF → Discord + Drive."""
     try:
@@ -239,22 +245,25 @@ def _generate_and_send_homework(
                 "note": "Based on recent mistakes — mark cao only",
             })
 
-        # 숙제 추천 Discord 전송
-        notifiers.discord_homework_suggestion(student, suggestion)
+        # 숙제 추천 Discord 전송 (박나인만)
+        if discord_enabled:
+            notifiers.discord_homework_suggestion(student, suggestion)
 
         # PDF 생성
         gen = ExamPDFGenerator()
         paths = gen.generate(student, unit, assignments)
 
-        # Drive 업로드 후 Discord 전송
+        # Drive 업로드 후 Discord 전송 (박나인만)
         paper_url = monitor.upload_pdf_to_student_folder(
             paths["paper"], student, STUDENT_DRIVE_FOLDERS
         )
-        notifiers.discord_exam_ready(student, unit, paths["paper"], paths["markscheme"], paper_url or "")
+        if discord_enabled:
+            notifiers.discord_exam_ready(student, unit, paths["paper"], paths["markscheme"], paper_url or "")
 
     except Exception as e:
         logger.error("숙제 PDF 생성 실패 — %s: %s", student, e, exc_info=True)
-        notifiers.discord(f"⚠️ Homework PDF 생성 실패 — {student}\n{e}")
+        if discord_enabled:
+            notifiers.discord(f"⚠️ Homework PDF 생성 실패 — {student}\n{e}")
 
 
 def run_weekly_report(monitor: SheetsMonitor, grader: Grader, notifiers: Notifiers):
