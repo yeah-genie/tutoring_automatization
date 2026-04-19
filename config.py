@@ -3,6 +3,7 @@
 .env.example 을 복사해서 .env 로 만들고 값을 채워주세요.
 """
 
+import json
 import os
 from dotenv import load_dotenv
 
@@ -27,6 +28,16 @@ DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
 NOTION_TOKEN = os.getenv("NOTION_TOKEN", "")
 NOTION_DATABASE_ID = os.getenv("NOTION_DATABASE_ID", "")
 
+# ─── 학생 Drive 폴더 ──────────────────────────────────────────
+def _parse_student_folders() -> dict[str, str]:
+    raw = os.getenv("STUDENT_DRIVE_FOLDERS", "{}")
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        return {}
+
+STUDENT_DRIVE_FOLDERS: dict[str, str] = _parse_student_folders()
+
 # ─── 앱 동작 설정 ─────────────────────────────────────────────
 POLLING_INTERVAL_SECONDS = 60
 DOWNLOAD_DIR = "downloads"
@@ -38,7 +49,7 @@ DB_PATH = "tutoring.db"
 # ─── 구글폼 열 이름 (실제 폼 응답 시트에 맞게 수정) ───────────
 FORM_COLUMNS = {
     "timestamp": "타임스탬프",
-    "student_name": "학생",
+    "student_name": "학생 이름",
     "homework_title": "단원명",
     "file_links": "숙제 업로드",
 }

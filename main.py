@@ -22,6 +22,7 @@ import schedule
 
 import config
 from modules.anomaly_detector import AnomalyDetector
+from modules.anonymizer import Anonymizer
 from modules.db import Database
 from modules.duplicate_checker import DuplicateChecker
 from modules.grader import Grader
@@ -56,14 +57,8 @@ def _check_config():
     return True
 
 
-# 학생별 Drive 폴더 ID
-STUDENT_DRIVE_FOLDERS = {
-    "양서연": "17zOlV9g_C9nPvdW7J_g9vzqBZ4gWqs5T",
-    "김준서": "1jlZE4R2LTQZUf8gaheFjEiEfqpRTBBCd",
-    "김하원": "1HWyIePa3oFwdNMeM9wrXJ97YpEif3r3J",
-    "박나인": "12JH_u8YON0ZbLZcMcC_08CQOw7EEO3dg",
-    "엄지후": "1o9MJQyOPrwLk0T6NgfZUNdDBOzA0PMmX",
-}
+# 학생별 Drive 폴더 ID — .env 의 STUDENT_DRIVE_FOLDERS 에서 로드
+STUDENT_DRIVE_FOLDERS = config.STUDENT_DRIVE_FOLDERS
 
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -314,7 +309,7 @@ def _generate_and_send_homework(
             model=config.CLAUDE_MODEL,
             max_tokens=800,
             system=HOMEWORK_SUGGESTION_SYSTEM,
-            messages=[{"role": "user", "content": homework_suggestion_prompt(student, wrong_history, unit)}],
+            messages=[{"role": "user", "content": homework_suggestion_prompt(Anonymizer().mask(student), wrong_history, unit)}],
         )
         raw = hw_resp.content[0].text
         match = _re.search(r"\{.*\}", raw, _re.DOTALL)
@@ -411,6 +406,17 @@ def main():
         metavar=("학생이름", "연도", "월"),
         help="월간 리포트 초안 생성 (예: --monthly 홍길동 2025 11)",
     )
+    parser.add_argument(
+        "--purge",
+        type=int,
+        metavar="일수",
+        help="N일 이상 된 데이터 삭제 (예: --purge 365)",
+    )
+    parser.add_argument(
+        "--delete-student",
+        metavar="학생이름",
+        help="특정 학생의 모든 데이터 삭제 (잊혀질 권리 대응)",
+    )
     args = parser.parse_args()
 
     logger.info("=== 수학 과외 자동화 시스템 시작 ===")
@@ -427,6 +433,16 @@ def main():
     notion = NotionReporter()
     detector = AnomalyDetector()
     Path(config.DOWNLOAD_DIR).mkdir(exist_ok=True)
+
+    if args.purge:
+        result = db.purge_old_data(retention_days=args.purge)
+        logger.info("데이터 정리 완료 (기준: %d일 이상): %s", args.purge, result)
+        return
+
+    if args.delete_student:
+        result = db.delete_student_data(args.delete_student)
+        logger.info("학생 데이터 삭제 완료 (%s): %s", args.delete_student, result)
+        return
 
     if args.clear_records:
         monitor.clear_sheet(config.SUBMISSION_RECORD_SHEET)
