@@ -52,6 +52,11 @@ function onFormSubmit(e) {
 // 폼 응답 파싱
 // ═══════════════════════════════════════════════════════════════
 function parseFormResponse(e) {
+  if (!e || !e.response) {
+    Logger.log('e.response가 없습니다. 폼에서 직접 트리거를 설정해야 합니다.');
+    return null;
+  }
+
   const responses = e.response.getItemResponses();
   const data = { studentName: '', unitName: '', fileIds: [] };
 
