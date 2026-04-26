@@ -77,19 +77,22 @@ def _grade_files_and_notify(
 ):
     """채점 → 오답노트/DB 저장 → Discord 알림 → 이상탐지 (전체 학생 대상)."""
     logger.info("채점 시작 — %s [%s], 파일 %d개", student, unit, len(grading_files))
-    result = grader.grade_submission(grading_files)
+    result = grader.grade_submission(grading_files, unit=unit)
 
     if not result.get("problems") and "error" in result:
         raise RuntimeError(f"채점 실패: {result['error']}")
 
     problems = result.get("problems", [])
 
+    # Claude가 문제에서 추론한 단원 (없으면 폼 입력값 사용)
+    effective_unit = result.get("inferred_unit") or unit
+
     # ⑤ 오답노트 저장 (Sheets — 오답만)
-    monitor.append_wrong_answers(student, unit, problems)
+    monitor.append_wrong_answers(student, effective_unit, problems)
 
     # ⑤-b 제출기록 시트에 요약 저장
     monitor.write_submission_record(
-        student, unit,
+        student, effective_unit,
         total_problems=result.get("total_problems", len(problems)),
         correct_count=result.get("correct_count", 0),
     )
@@ -103,7 +106,7 @@ def _grade_files_and_notify(
 
     session_id = db.save_session(
         student_name=student,
-        homework_title=unit,
+        homework_title=effective_unit,
         submitted_at=datetime.now().strftime("%Y-%m-%d"),
         total_problems=result.get("total_problems", len(problems)),
         correct_count=result.get("correct_count", 0),
@@ -111,7 +114,7 @@ def _grade_files_and_notify(
     )
 
     # ⑦ Discord 채점 완료 + 해설 (전체 학생)
-    notifiers.discord_grading_with_explanation(student, unit, result)
+    notifiers.discord_grading_with_explanation(student, effective_unit, result)
 
     # ⑦-b 숙제 추천 + 시험지 PDF 생성 + Discord 전송
     _generate_and_send_homework(student, unit, monitor, grader, notifiers)

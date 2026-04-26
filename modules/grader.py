@@ -15,7 +15,7 @@ from modules.anonymizer import Anonymizer
 from modules.image_processor import to_base64
 from prompts.grading_prompt import (
     GRADING_SYSTEM,
-    GRADING_USER,
+    grading_user_prompt,
     PATTERN_ANALYSIS_SYSTEM,
     WEEKLY_REPORT_SYSTEM,
     MONTHLY_REPORT_SYSTEM,
@@ -32,7 +32,7 @@ class Grader:
         self.client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
         self._anon = Anonymizer()
 
-    def grade_submission(self, image_paths: list[Path]) -> dict:
+    def grade_submission(self, image_paths: list[Path], unit: str = "") -> dict:
         """
         한 학생의 제출 파일(이미지 목록)을 채점.
         여러 이미지를 하나의 요청으로 묶어서 비용 절감.
@@ -52,12 +52,12 @@ class Grader:
                     "data": b64,
                 },
             })
-        content.append({"type": "text", "text": GRADING_USER})
+        content.append({"type": "text", "text": grading_user_prompt(unit)})
 
         try:
             response = self.client.messages.create(
                 model=config.CLAUDE_MODEL,
-                max_tokens=4096,
+                max_tokens=8192,
                 system=GRADING_SYSTEM,
                 messages=[{"role": "user", "content": content}],
             )
