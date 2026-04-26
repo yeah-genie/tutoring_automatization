@@ -202,10 +202,12 @@ function sendGradingEmbed(studentName, unitName, result) {
 
   // 오답 유형 집계
   const typeCounts = {};
+  const wrongProblems = [];
   for (const p of (result.problems || [])) {
     if (!p.is_correct && p.error_type) {
       typeCounts[p.error_type] = (typeCounts[p.error_type] || 0) + 1;
     }
+    if (!p.is_correct) wrongProblems.push(p);
   }
   const typeStr = Object.entries(typeCounts)
     .sort((a, b) => b[1] - a[1])
@@ -216,11 +218,11 @@ function sendGradingEmbed(studentName, unitName, result) {
     title:  `✅ 채점 완료 — ${studentName}`,
     color,
     fields: [
-      { name: '단원',     value: unitName || '미기재',                     inline: true },
-      { name: '점수',     value: `${correct}/${total} (${pct}%)`,          inline: true },
-      { name: '오답',     value: `${wrong}건`,                             inline: true },
-      { name: '오답 유형', value: typeStr,                                  inline: false },
-      { name: '종합 피드백', value: result.overall_feedback || '—',        inline: false },
+      { name: '단원',      value: unitName || '미기재',            inline: true  },
+      { name: '점수',      value: `${correct}/${total} (${pct}%)`, inline: true  },
+      { name: '오답',      value: `${wrong}건`,                    inline: true  },
+      { name: '오답 유형', value: typeStr,                         inline: false },
+      { name: '종합 피드백', value: result.overall_feedback || '—', inline: false },
     ],
   };
 
@@ -230,6 +232,19 @@ function sendGradingEmbed(studentName, unitName, result) {
     payload: JSON.stringify({ embeds: [embed] }),
     muteHttpExceptions: true,
   });
+
+  // 틀린 문제가 있으면 상세 해설 메시지 추가 전송
+  if (wrongProblems.length > 0) {
+    const lines = wrongProblems.map(p => {
+      const num = p.problem_number || '?';
+      const studentAns = p.student_answer ? `학생: ${p.student_answer}` : '';
+      const correctAns = p.correct_answer ? `정답: ${p.correct_answer}` : '';
+      const ansLine = [studentAns, correctAns].filter(Boolean).join(' → ');
+      return `**${num}번**${ansLine ? ` | ${ansLine}` : ''}\n${p.feedback || ''}`;
+    }).join('\n\n');
+
+    sendDiscord(`📝 **틀린 문제 해설**\n\n${lines}`);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -267,14 +282,36 @@ const GRADING_PROMPT = `다음 숙제 이미지/PDF를 분석해서 아래 JSON 
     {
       "problem_number": "1",
       "is_correct": true,
+      "student_answer": "7/15",
+      "correct_answer": "7/15",
       "error_type": null,
       "feedback": "잘 풀었어요!"
     },
     {
       "problem_number": "2",
       "is_correct": false,
+      "student_answer": "33/60",
+      "correct_answer": "28/60",
       "error_type": "계산실수",
       "feedback": "공식은 맞는데 마지막 계산에서 실수했어요."
     }
   ]
 }`;
+
+// ═══════════════════════════════════════════════════════════════
+// 수동 테스트 — Apps Script 에디터에서 직접 실행
+// ═══════════════════════════════════════════════════════════════
+function testManual() {
+  const fakeEvent = {
+    response: {
+      getItemResponses: function() {
+        return [
+          { getItem: function() { return { getTitle: function() { return '학생'; } }; },        getResponse: function() { return '양서연'; } },
+          { getItem: function() { return { getTitle: function() { return '단원명'; } }; },       getResponse: function() { return '확률과 집합'; } },
+          { getItem: function() { return { getTitle: function() { return '숙제 업로드'; } }; }, getResponse: function() { return ['1_QSAI0aKX7wetqS-iUWBaeiH6P2PbLqd']; } },
+        ];
+      }
+    }
+  };
+  onFormSubmit(fakeEvent);
+}
