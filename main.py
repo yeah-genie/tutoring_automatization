@@ -117,7 +117,7 @@ def _grade_files_and_notify(
     notifiers.discord_grading_with_explanation(student, effective_unit, result)
 
     # ⑦-b 숙제 추천 + 시험지 PDF 생성 + Discord 전송
-    _generate_and_send_homework(student, unit, monitor, grader, notifiers)
+    _generate_and_send_homework(student, effective_unit, monitor, grader, notifiers)
 
     # ⑧ 이상탐지
     sessions = db.get_sessions(student)

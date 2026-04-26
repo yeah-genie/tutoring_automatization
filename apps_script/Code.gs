@@ -6,3 +6,6 @@
 //   python main.py --once       # 새 제출 한 번만 처리
 //   python main.py --weekly     # 주간 리포트 즉시 생성
 //   python main.py --monthly 홍길동 2026 4  # 월간 리포트 초안
+
+// 기존 트리거 오류 방지용 — 실제 동작 없음
+function onFormSubmit(e) {}

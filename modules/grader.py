@@ -57,7 +57,7 @@ class Grader:
         try:
             response = self.client.messages.create(
                 model=config.CLAUDE_MODEL,
-                max_tokens=8192,
+                max_tokens=16384,
                 system=GRADING_SYSTEM,
                 messages=[{"role": "user", "content": content}],
             )
@@ -130,13 +130,18 @@ class Grader:
     @staticmethod
     def _parse_json_response(raw: str) -> dict:
         """Claude 응답에서 JSON 블록 추출 및 파싱."""
-        # ```json ... ``` 블록 추출 시도
-        match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw, re.DOTALL)
+        # ```json ... ``` 블록 추출 시도 (greedy로 중첩 JSON 보존)
+        match = re.search(r"```(?:json)?\s*(\{.*\})\s*```", raw, re.DOTALL)
         if match:
             raw = match.group(1)
         else:
-            # 직접 JSON인 경우
-            raw = raw.strip()
+            # 첫 번째 { 부터 마지막 } 까지 추출
+            start = raw.find("{")
+            end = raw.rfind("}")
+            if start != -1 and end != -1:
+                raw = raw[start:end + 1]
+            else:
+                raw = raw.strip()
 
         try:
             return json.loads(raw)
