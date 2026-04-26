@@ -7,7 +7,8 @@
 // Apps Script 에디터 → 프로젝트 설정 → 스크립트 속성에서 추가하세요.
 const ANTHROPIC_API_KEY  = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
 const DISCORD_WEBHOOK_URL = PropertiesService.getScriptProperties().getProperty('DISCORD_WEBHOOK_URL');
-const WRONG_ANSWER_SHEET = '오답노트';
+const WRONG_ANSWER_SHEET   = '오답노트';
+const FORM_RESPONSE_SHEET  = '설문지 응답 시트1';
 const CLAUDE_MODEL = 'claude-opus-4-7';
 
 // ─── 폼 질문 제목 (실제 폼과 일치해야 함) ────────────────────────
@@ -31,6 +32,10 @@ function onFormSubmit(e) {
       sendDiscord(`⚠️ **중복 파일** — ${sub.studentName}\n이미 처리된 파일이에요.`);
       return;
     }
+
+    // 폼 응답 시트의 해당 행 링크를 클릭 가능하게 변환
+    const formSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FORM_RESPONSE_SHEET);
+    if (formSheet) fixLinksInRow(formSheet, formSheet.getLastRow());
 
     // Claude로 채점
     sendDiscord(`🔄 **채점 시작** — ${sub.studentName} / ${sub.unitName || '단원 미기재'}\n파일 ${newIds.length}개 처리 중...`);
@@ -75,6 +80,42 @@ function parseFormResponse(e) {
   }
 
   return data.studentName ? data : null;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 링크 클릭 가능하게 변환
+// ═══════════════════════════════════════════════════════════════
+function fixLinksInRow(sheet, row) {
+  const cell = sheet.getRange(row, 3); // C열 = 숙제 업로드
+  const value = cell.getValue().toString();
+  const urls = value.split(',').map(u => u.trim()).filter(u => u.startsWith('http'));
+  if (urls.length === 0) return;
+
+  let text = '';
+  const segments = [];
+  for (let i = 0; i < urls.length; i++) {
+    const start = text.length;
+    text += urls[i];
+    segments.push({ start, end: text.length, url: urls[i] });
+    if (i < urls.length - 1) text += '\n';
+  }
+
+  const builder = SpreadsheetApp.newRichTextValue().setText(text);
+  for (const seg of segments) {
+    builder.setLinkUrl(seg.start, seg.end, seg.url);
+  }
+  cell.setRichTextValue(builder.build());
+}
+
+// 기존 데이터 전체 링크 일괄 변환 — Apps Script 에디터에서 한 번만 실행
+function fixAllLinks() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FORM_RESPONSE_SHEET);
+  if (!sheet) return;
+  const lastRow = sheet.getLastRow();
+  for (let row = 2; row <= lastRow; row++) {
+    fixLinksInRow(sheet, row);
+  }
+  Logger.log(`총 ${lastRow - 1}개 행 링크 변환 완료`);
 }
 
 // ═══════════════════════════════════════════════════════════════
