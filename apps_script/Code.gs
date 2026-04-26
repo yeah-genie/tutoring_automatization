@@ -214,11 +214,13 @@ function sendGradingEmbed(studentName, unitName, result) {
     .map(([k, v]) => `${k} ${v}건`)
     .join(' / ') || '없음';
 
+  const displayUnit = result.inferred_unit || unitName || '미기재';
+
   const embed = {
     title:  `✅ 채점 완료 — ${studentName}`,
     color,
     fields: [
-      { name: '단원',      value: unitName || '미기재',            inline: true  },
+      { name: '단원',      value: displayUnit,                     inline: true  },
       { name: '점수',      value: `${correct}/${total} (${pct}%)`, inline: true  },
       { name: '오답',      value: `${wrong}건`,                    inline: true  },
       { name: '오답 유형', value: typeStr,                         inline: false },
@@ -279,10 +281,12 @@ const GRADING_PROMPT = `다음 숙제 이미지/PDF를 분석해서 아래 JSON 
    - "문제이해": 문제 해석 오류
    - "기타": 그 외
 5. 학생이 이해할 수 있는 언어로 구체적인 피드백
+6. 문제 내용을 보고 어떤 수학 단원인지 스스로 판단해주세요. 이미지에 단원명이 적혀 있지 않아도 문제 유형(사인 법칙, 조건부 확률, 이차방정식 등)을 보면 단원을 알 수 있습니다. 학생이 폼에 입력한 단원명이 있으면 참고하되, 문제 내용과 다르면 실제 문제 기준으로 판단하세요.
 
 **응답 형식:**
 {
   "homework_title": "숙제 제목 (이미지에서 확인 가능하면 기재, 없으면 단원명 사용)",
+  "inferred_unit": "문제 내용으로 판단한 단원명 (예: 사인 법칙, 조건부 확률, 이차방정식)",
   "total_problems": 문제수,
   "correct_count": 맞은문제수,
   "overall_feedback": "전반적인 한 줄 피드백",
