@@ -34,7 +34,7 @@ function onFormSubmit(e) {
 
     // Claude로 채점
     sendDiscord(`🔄 **채점 시작** — ${sub.studentName} / ${sub.unitName || '단원 미기재'}\n파일 ${newIds.length}개 처리 중...`);
-    const result = gradeWithClaude(newIds);
+    const result = gradeWithClaude(newIds, sub.unitName);
 
     // 오답노트 저장
     saveToSheet(sub.studentName, sub.unitName, result);
@@ -86,7 +86,9 @@ function filterDuplicates(fileIds) {
   const newIds = fileIds.filter(id => id && !seen.includes(id));
 
   if (newIds.length > 0) {
-    props.setProperty('seenFileIds', JSON.stringify([...seen, ...newIds]));
+    const updated = [...seen, ...newIds];
+    // 최대 500개만 유지 (Script Properties 9KB 한도 대비)
+    props.setProperty('seenFileIds', JSON.stringify(updated.slice(-500)));
   }
   return newIds;
 }
@@ -94,7 +96,7 @@ function filterDuplicates(fileIds) {
 // ═══════════════════════════════════════════════════════════════
 // Claude Vision 채점
 // ═══════════════════════════════════════════════════════════════
-function gradeWithClaude(fileIds) {
+function gradeWithClaude(fileIds, unitName) {
   const content = [];
 
   for (const fileId of fileIds) {
@@ -123,15 +125,17 @@ function gradeWithClaude(fileIds) {
 
   if (content.length === 0) throw new Error('처리 가능한 파일이 없습니다.');
 
-  content.push({ type: 'text', text: GRADING_PROMPT });
+  const prompt = unitName
+    ? `${GRADING_PROMPT}\n\n※ 이 숙제의 단원명: ${unitName}`
+    : GRADING_PROMPT;
+  content.push({ type: 'text', text: prompt });
 
   const res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
     method: 'post',
     headers: {
-      'x-api-key':          ANTHROPIC_API_KEY,
-      'anthropic-version':  '2023-06-01',
-      'content-type':       'application/json',
-      'anthropic-beta':     'pdfs-2024-09-25',  // PDF 지원 활성화
+      'x-api-key':         ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'content-type':      'application/json',
     },
     payload: JSON.stringify({
       model:      CLAUDE_MODEL,
@@ -145,7 +149,10 @@ function gradeWithClaude(fileIds) {
   const body = JSON.parse(res.getContentText());
   if (body.error) throw new Error(body.error.message);
 
-  return parseJson(body.content[0].text);
+  const text = body.content && body.content[0] && body.content[0].text;
+  if (!text) throw new Error('Claude 응답이 비어있습니다. API 응답: ' + JSON.stringify(body));
+
+  return parseJson(text);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -252,10 +259,9 @@ const GRADING_PROMPT = `다음 숙제 이미지/PDF를 분석해서 아래 JSON 
 - "문제이해": 문제 해석 오류
 - "기타"
 
-\`\`\`json
 {
-  "total_problems": 문제수,
-  "correct_count": 맞은문제수,
+  "total_problems": 5,
+  "correct_count": 3,
   "overall_feedback": "전반적인 한 줄 피드백",
   "problems": [
     {
@@ -271,5 +277,4 @@ const GRADING_PROMPT = `다음 숙제 이미지/PDF를 분석해서 아래 JSON 
       "feedback": "공식은 맞는데 마지막 계산에서 실수했어요."
     }
   ]
-}
-\`\`\``;
+}`;
