@@ -7,7 +7,8 @@
 // Apps Script 에디터 → 프로젝트 설정 → 스크립트 속성에서 추가하세요.
 const ANTHROPIC_API_KEY  = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
 const DISCORD_WEBHOOK_URL = PropertiesService.getScriptProperties().getProperty('DISCORD_WEBHOOK_URL');
-const WRONG_ANSWER_SHEET = '오답노트';
+const WRONG_ANSWER_SHEET   = '오답노트';
+const FORM_RESPONSE_SHEET  = '설문지 응답 시트1';
 const CLAUDE_MODEL = 'claude-opus-4-7';
 
 // ─── 폼 질문 제목 (실제 폼과 일치해야 함) ────────────────────────
@@ -31,6 +32,10 @@ function onFormSubmit(e) {
       sendDiscord(`⚠️ **중복 파일** — ${sub.studentName}\n이미 처리된 파일이에요.`);
       return;
     }
+
+    // 폼 응답 시트의 해당 행 링크를 클릭 가능하게 변환
+    const formSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FORM_RESPONSE_SHEET);
+    if (formSheet) fixLinksInRow(formSheet, formSheet.getLastRow());
 
     // Claude로 채점
     sendDiscord(`🔄 **채점 시작** — ${sub.studentName} / ${sub.unitName || '단원 미기재'}\n파일 ${newIds.length}개 처리 중...`);
@@ -75,6 +80,42 @@ function parseFormResponse(e) {
   }
 
   return data.studentName ? data : null;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 링크 클릭 가능하게 변환
+// ═══════════════════════════════════════════════════════════════
+function fixLinksInRow(sheet, row) {
+  const cell = sheet.getRange(row, 3); // C열 = 숙제 업로드
+  const value = cell.getValue().toString();
+  const urls = value.split(',').map(u => u.trim()).filter(u => u.startsWith('http'));
+  if (urls.length === 0) return;
+
+  let text = '';
+  const segments = [];
+  for (let i = 0; i < urls.length; i++) {
+    const start = text.length;
+    text += urls[i];
+    segments.push({ start, end: text.length, url: urls[i] });
+    if (i < urls.length - 1) text += '\n';
+  }
+
+  const builder = SpreadsheetApp.newRichTextValue().setText(text);
+  for (const seg of segments) {
+    builder.setLinkUrl(seg.start, seg.end, seg.url);
+  }
+  cell.setRichTextValue(builder.build());
+}
+
+// 기존 데이터 전체 링크 일괄 변환 — Apps Script 에디터에서 한 번만 실행
+function fixAllLinks() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FORM_RESPONSE_SHEET);
+  if (!sheet) return;
+  const lastRow = sheet.getLastRow();
+  for (let row = 2; row <= lastRow; row++) {
+    fixLinksInRow(sheet, row);
+  }
+  Logger.log(`총 ${lastRow - 1}개 행 링크 변환 완료`);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -214,11 +255,13 @@ function sendGradingEmbed(studentName, unitName, result) {
     .map(([k, v]) => `${k} ${v}건`)
     .join(' / ') || '없음';
 
+  const displayUnit = result.inferred_unit || unitName || '미기재';
+
   const embed = {
     title:  `✅ 채점 완료 — ${studentName}`,
     color,
     fields: [
-      { name: '단원',      value: unitName || '미기재',            inline: true  },
+      { name: '단원',      value: displayUnit,                     inline: true  },
       { name: '점수',      value: `${correct}/${total} (${pct}%)`, inline: true  },
       { name: '오답',      value: `${wrong}건`,                    inline: true  },
       { name: '오답 유형', value: typeStr,                         inline: false },
@@ -263,40 +306,53 @@ function parseJson(text) {
 // 프롬프트
 // ═══════════════════════════════════════════════════════════════
 const GRADING_SYSTEM = `당신은 수학 과외 선생님의 숙제 채점 도우미입니다.
+학생이 제출한 숙제 사진이나 PDF를 분석하여 정확하고 친절한 피드백을 제공합니다.
 반드시 JSON 형식으로만 응답하고, JSON 외 다른 텍스트는 포함하지 마세요.`;
 
 const GRADING_PROMPT = `다음 숙제 이미지/PDF를 분석해서 아래 JSON 형식으로만 응답해주세요.
 
-오답 유형:
-- "개념부족": 개념 이해 부족
-- "계산실수": 계산 과정 단순 실수
-- "풀이순서": 풀이 방법/순서 오류
-- "문제이해": 문제 해석 오류
-- "기타"
+**분석 항목:**
+1. 이미지에 있는 모든 문제를 빠짐없이 찾아주세요 (1번, 2번처럼 큰 번호 아래 소문제 a, b, c, d가 있으면 각각 개별 항목으로 분석)
+2. 각 문제마다 학생이 실제로 쓴 답을 읽어주세요
+3. 정답과 비교해서 정오 판정
+4. 오답이면 오답 유형 분류:
+   - "개념부족": 개념 이해 부족으로 인한 오류
+   - "계산실수": 계산 과정의 단순 실수
+   - "풀이순서": 풀이 방법/순서 오류
+   - "문제이해": 문제 해석 오류
+   - "기타": 그 외
+5. 학생이 이해할 수 있는 언어로 구체적인 피드백
+6. 문제 내용을 보고 어떤 수학 단원인지 스스로 판단해주세요. 이미지에 단원명이 적혀 있지 않아도 문제 유형(사인 법칙, 조건부 확률, 이차방정식 등)을 보면 단원을 알 수 있습니다. 학생이 폼에 입력한 단원명이 있으면 참고하되, 문제 내용과 다르면 실제 문제 기준으로 판단하세요.
 
+**응답 형식:**
 {
-  "total_problems": 5,
-  "correct_count": 3,
+  "homework_title": "숙제 제목 (이미지에서 확인 가능하면 기재, 없으면 단원명 사용)",
+  "inferred_unit": "문제 내용으로 판단한 단원명 (예: 사인 법칙, 조건부 확률, 이차방정식)",
+  "total_problems": 문제수,
+  "correct_count": 맞은문제수,
   "overall_feedback": "전반적인 한 줄 피드백",
+  "image_quality": "good 또는 poor(흐림/기울어짐) 또는 unreadable(판독불가)",
   "problems": [
     {
-      "problem_number": "1",
+      "problem_number": "1a",
       "is_correct": true,
-      "student_answer": "7/15",
-      "correct_answer": "7/15",
+      "student_answer": "학생이 실제로 쓴 답",
+      "correct_answer": "정답",
       "error_type": null,
       "feedback": "잘 풀었어요!"
     },
     {
-      "problem_number": "2",
+      "problem_number": "1b",
       "is_correct": false,
-      "student_answer": "33/60",
-      "correct_answer": "28/60",
+      "student_answer": "학생이 실제로 쓴 답",
+      "correct_answer": "정답",
       "error_type": "계산실수",
-      "feedback": "공식은 맞는데 마지막 계산에서 실수했어요."
+      "feedback": "공식은 맞게 썼는데 마지막 나눗셈에서 실수했어요. 3 ÷ 6 = 0.5예요."
     }
   ]
-}`;
+}
+
+image_quality가 unreadable이면 problems는 빈 배열, overall_feedback에 사유 기재.`;
 
 // ═══════════════════════════════════════════════════════════════
 // 수동 테스트 — Apps Script 에디터에서 직접 실행
