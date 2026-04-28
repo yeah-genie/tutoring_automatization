@@ -55,10 +55,19 @@ image_quality는 "good", "poor" (흐림/기울어짐), "unreadable" (판독 불�
 PATTERN_ANALYSIS_SYSTEM = """당신은 수학 과외 선생님의 학습 분석 도우미입니다.
 학생의 오답 데이터를 분석하여 패턴과 인사이트를 도출합니다."""
 
+def _parse_sid(sid: str) -> tuple[str, str]:
+    """제출ID(YYYYMMDD_HHMMSS_학생_단원)에서 (날짜, 단원명) 추출."""
+    parts = sid.split("_", 3)
+    date = parts[0] if len(parts) > 0 else ""
+    unit = parts[3] if len(parts) > 3 else ""
+    return date, unit
+
+
 def pattern_analysis_prompt(student_name: str, wrong_answers: list[dict]) -> str:
     rows_text = "\n".join(
-        f"- [{r.get('날짜','')}] {r.get('숙제제목','')} 문제{r.get('문제번호','')} | "
-        f"유형: {r.get('오답유형','')} | 피드백: {r.get('피드백','')}"
+        f"- [{_parse_sid(r.get('제출ID',''))[0]}] {_parse_sid(r.get('제출ID',''))[1]} "
+        f"문제{r.get('문제번호','')} | "
+        f"유형: {r.get('오답유형','')} | 피드백: {r.get('AI해설','')}"
         for r in wrong_answers
     )
     return f"""학생 이름: {student_name}
@@ -84,8 +93,13 @@ WEEKLY_REPORT_SYSTEM = """당신은 수학 과외 선생님의 주간 리포트 
 def weekly_report_prompt(week_start: str, students_data: dict[str, list[dict]]) -> str:
     lines = []
     for name, records in students_data.items():
-        error_types = [r.get("오답유형", "") for r in records if r.get("오답유형")]
-        lines.append(f"- {name}: 오답 {len(records)}건, 유형: {', '.join(set(error_types)) or '없음'}")
+        total = sum(int(r.get("총문제수", 0) or 0) for r in records)
+        wrong = sum(int(r.get("오답수", 0) or 0) for r in records)
+        units = list({r.get("단원", "") for r in records if r.get("단원")})
+        lines.append(
+            f"- {name}: 제출 {len(records)}회, 총 {total}문제 중 오답 {wrong}건, "
+            f"단원: {', '.join(units) or '없음'}"
+        )
     summary = "\n".join(lines) if lines else "이번 주 제출 없음"
 
     return f"""이번 주({week_start}) 숙제 현황:
@@ -160,7 +174,8 @@ HOMEWORK_SUGGESTION_SYSTEM = """당신은 수학 과외 선생님의 숙제 설�
 
 def homework_suggestion_prompt(student_name: str, recent_wrong: list[dict], unit: str = "") -> str:
     rows = "\n".join(
-        f"- {r.get('날짜','')} | {r.get('단원','')} {r.get('문제번호','')}번 | "
+        f"- {_parse_sid(r.get('제출ID',''))[0]} | {_parse_sid(r.get('제출ID',''))[1]} "
+        f"{r.get('문제번호','')}번 | "
         f"{r.get('오답유형','')} | {r.get('AI해설','')[:60]}"
         for r in recent_wrong[-10:]
     )

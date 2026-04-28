@@ -95,7 +95,8 @@ class Database:
     def is_processed(self, row_number: int) -> bool:
         with self._conn() as conn:
             row = conn.execute(
-                "SELECT 1 FROM processed_rows WHERE row_number = ?", (row_number,)
+                "SELECT 1 FROM processed_rows WHERE row_number = ? AND status = 'success'",
+                (row_number,),
             ).fetchone()
             return row is not None
 

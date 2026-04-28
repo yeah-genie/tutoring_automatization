@@ -12,11 +12,18 @@ const FORM_RESPONSE_SHEET  = '설문지 응답 시트1';
 const CLAUDE_MODEL = 'claude-opus-4-7';
 
 // ─── 폼 질문 제목 (실제 폼과 일치해야 함) ────────────────────────
+// ⚠️  Python config.py 의 FORM_COLUMNS 과 반드시 동일한 값을 사용하세요.
+//   현재 config.py: student_name = "학생 이름" — 실제 폼 질문 제목 확인 후 맞춰주세요.
 const FORM_FIELDS = {
-  student: '학생',
+  student: '학생 이름',  // config.py FORM_COLUMNS["student_name"] 과 동일하게 유지
   files:   '숙제 업로드',
   unit:    '단원명',
 };
+
+// ─── 숙제 업로드 질문이 폼 응답 시트에서 몇 번째 열인지 ────────────
+// 구글폼은 응답을 타임스탬프(A열) 다음부터 질문 순서대로 저장합니다.
+// 폼 질문 순서가 바뀌면 이 값도 함께 수정해야 합니다.
+const FILE_UPLOAD_COLUMN = 4; // 타임스탬프(1), 학생이름(2), 단원명(3), 숙제업로드(4)
 
 // ═══════════════════════════════════════════════════════════════
 // 메인 함수 — 폼 제출 시 자동 실행
@@ -86,7 +93,7 @@ function parseFormResponse(e) {
 // 링크 클릭 가능하게 변환
 // ═══════════════════════════════════════════════════════════════
 function fixLinksInRow(sheet, row) {
-  const cell = sheet.getRange(row, 3); // C열 = 숙제 업로드
+  const cell = sheet.getRange(row, FILE_UPLOAD_COLUMN);
   const value = cell.getValue().toString();
   const urls = value.split(',').map(u => u.trim()).filter(u => u.startsWith('http'));
   if (urls.length === 0) return;
@@ -198,27 +205,38 @@ function gradeWithClaude(fileIds, unitName) {
 
 // ═══════════════════════════════════════════════════════════════
 // 오답노트 시트 저장
-// 열 순서: 학생이름, 문제번호, 정답여부, 오답유형, 첨삭자, AI해설
+// 열 순서: 제출ID, 문제번호, 학생답안, 정답, 오답유형, AI해설, 복습완료
+// Python modules/sheets_monitor.py:append_wrong_answers 와 동일한 스키마
 // ═══════════════════════════════════════════════════════════════
 function saveToSheet(studentName, unitName, result) {
   const ss    = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(WRONG_ANSWER_SHEET);
   if (!sheet) return;
 
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const datePart = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}`;
+  const timePart = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  const safeStudent = studentName.replace(/\s+/g, '');
+  const safeUnit    = (unitName || '숙제').replace(/\s+/g, '');
+  const submissionId = `${datePart}_${timePart}_${safeStudent}_${safeUnit}`;
+
   const rows = [];
   for (const p of (result.problems || [])) {
+    if (p.is_correct) continue;  // 오답만 저장
     rows.push([
-      studentName,
-      p.problem_number || '',
-      p.is_correct ? 'O' : 'X',
-      p.is_correct ? '' : (p.error_type || ''),
-      'AI',
-      p.feedback || '',
+      submissionId,
+      p.problem_number  || '',
+      p.student_answer  || '',
+      p.correct_answer  || '',
+      p.error_type      || '',
+      p.feedback        || '',
+      '',  // 복습완료 — 처음엔 빈칸
     ]);
   }
 
   if (rows.length > 0) {
-    sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, 6).setValues(rows);
+    sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, 7).setValues(rows);
   }
 }
 

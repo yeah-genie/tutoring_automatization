@@ -104,28 +104,37 @@ pip install -r requirements.txt
 
 ## 6. 구글폼 컬럼명 확인
 
-`config.py`의 `FORM_COLUMNS`를 실제 구글폼 응답 시트의 열 제목과 맞추세요.
+`config.py`의 `FORM_COLUMNS`와 `apps_script/Code.gs`의 `FORM_FIELDS`를 실제 구글폼 질문 제목과 맞추세요. **두 파일의 값이 반드시 일치해야 합니다.**
 
 ```python
+# config.py
 FORM_COLUMNS = {
-    "timestamp": "타임스탬프",      # 폼에서 자동 생성
-    "student_name": "이름",         # 폼 질문 제목
-    "subject": "과목",
-    "homework_title": "숙제 제목",
-    "file_links": "파일 업로드",    # Drive 링크 질문 제목
+    "timestamp":      "타임스탬프",   # 폼에서 자동 생성 (변경 불필요)
+    "student_name":   "학생 이름",    # 폼 질문 제목과 완전히 일치해야 함
+    "homework_title": "단원명",       # 폼 질문 제목과 완전히 일치해야 함
+    "file_links":     "숙제 업로드",  # 폼 질문 제목과 완전히 일치해야 함
 }
 ```
 
-스프레드시트 열 제목과 정확히 일치해야 합니다.
+```javascript
+// apps_script/Code.gs
+const FORM_FIELDS = {
+  student: '학생 이름',   // config.py student_name 과 동일
+  files:   '숙제 업로드', // config.py file_links 와 동일
+  unit:    '단원명',      // config.py homework_title 과 동일
+};
+```
+
+> ⚠️ **주의**: 이 값들이 실제 폼 질문 제목과 하나라도 다르면 제출이 무시됩니다.
 
 ---
 
 ## 7. 오답노트 시트 컬럼 준비
 
-스프레드시트의 `오답노트` 시트에 아래 헤더를 1행에 추가하세요:
+스프레드시트의 `오답노트` 시트에 아래 헤더를 **정확히 이 순서로** 1행에 추가하세요:
 
 ```
-날짜 | 학생 이름 | 숙제제목 | 문제번호 | 오답유형 | 학생답안 | 정답 | 피드백
+제출ID | 문제번호 | 학생답안 | 정답 | 오답유형 | AI해설 | 복습완료
 ```
 
 ---
