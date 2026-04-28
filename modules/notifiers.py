@@ -134,11 +134,13 @@ class Notifiers:
             t = p.get("error_type") or "기타"
             error_counts[t] = error_counts.get(t, 0) + 1
 
+        display_unit = result.get("inferred_unit") or unit or "—"
+
         summary_embed = {
             "title": f"✅ 채점 완료 — {student_name}",
             "color": color,
             "fields": [
-                {"name": "단원", "value": unit or "—", "inline": True},
+                {"name": "단원", "value": display_unit, "inline": True},
                 {"name": "점수", "value": score_str, "inline": True},
                 {"name": "오답 유형", "value": " / ".join(f"{k} {v}건" for k, v in error_counts.items()) or "없음", "inline": True},
                 {"name": "종합 피드백", "value": result.get("overall_feedback", "—"), "inline": False},

@@ -79,8 +79,10 @@ def _grade_files_and_notify(
     logger.info("채점 시작 — %s [%s], 파일 %d개", student, unit, len(grading_files))
     result = grader.grade_submission(grading_files)
 
-    if not result.get("problems") and "error" in result:
-        raise RuntimeError(f"채점 실패: {result['error']}")
+    if not result.get("problems"):
+        err = result.get("error") or result.get("parse_error")
+        if err:
+            raise RuntimeError(f"채점 실패: {err}")
 
     problems = result.get("problems", [])
 

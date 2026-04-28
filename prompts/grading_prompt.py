@@ -6,50 +6,55 @@ GRADING_SYSTEM = """당신은 수학 과외 선생님의 숙제 채점 도우미
 학생이 제출한 숙제 사진이나 PDF를 분석하여 정확하고 친절한 피드백을 제공합니다.
 반드시 JSON 형식으로만 응답하고, JSON 외 다른 텍스트는 포함하지 마세요."""
 
-GRADING_USER = """다음 숙제 이미지를 분석해서 아래 JSON 형식으로만 응답해주세요.
+GRADING_USER = """다음 숙제 이미지/PDF를 분석해서 아래 JSON 형식으로만 응답해주세요.
 
 **분석 항목:**
-- 각 문제의 정오 판정
-- 오답인 경우 오답 유형 분류:
-  * "개념부족": 개념 이해 부족으로 인한 오류
-  * "계산실수": 계산 과정의 단순 실수
-  * "풀이순서": 풀이 방법/순서 오류
-  * "문제이해": 문제 해석 오류
-  * "기타": 그 외
-- 학생 답안과 정답
-- 구체적인 피드백 (학생이 이해할 수 있는 언어로)
+1. 이미지에 있는 모든 문제를 빠짐없이 찾아주세요.
+   1번, 2번처럼 큰 번호 아래 소문제 a, b, c, d가 있으면 각각 개별 항목으로 분석하세요.
+2. 각 문제마다 학생이 실제로 쓴 답을 읽어주세요.
+3. 정답과 비교해서 정오 판정하세요.
+4. 오답이면 오답 유형 분류:
+   - "개념부족": 개념 이해 부족으로 인한 오류
+   - "계산실수": 계산 과정의 단순 실수
+   - "풀이순서": 풀이 방법/순서 오류
+   - "문제이해": 문제 해석 오류
+   - "기타": 그 외
+5. 학생이 이해할 수 있는 언어로 구체적인 피드백을 작성하세요.
+6. 문제 내용을 보고 어떤 수학 단원인지 스스로 판단하세요.
+   이미지에 단원명이 없어도 문제 유형(사인 법칙, 조건부 확률 등)으로 판단 가능합니다.
+   학생이 입력한 단원명이 있으면 참고하되, 문제 내용과 다르면 실제 문제 기준으로 판단하세요.
 
 **응답 형식:**
 ```json
 {
-  "homework_title": "숙제 제목 (이미지에서 확인 가능하면 기재)",
+  "homework_title": "숙제 제목 (이미지에서 확인 가능하면 기재, 없으면 단원명 사용)",
+  "inferred_unit": "문제 내용으로 판단한 단원명 (예: 사인 법칙, 조건부 확률, 이차방정식)",
   "total_problems": 문제수,
   "correct_count": 맞은문제수,
   "overall_feedback": "전반적인 한 줄 피드백",
+  "image_quality": "good 또는 poor(흐림/기울어짐) 또는 unreadable(판독불가)",
   "problems": [
     {
-      "problem_number": "1",
+      "problem_number": "1a",
       "is_correct": true,
-      "student_answer": "학생이 쓴 답",
+      "student_answer": "학생이 실제로 쓴 답",
       "correct_answer": "정답",
       "error_type": null,
       "feedback": "잘 풀었어요!"
     },
     {
-      "problem_number": "2",
+      "problem_number": "1b",
       "is_correct": false,
-      "student_answer": "학생이 쓴 답",
+      "student_answer": "학생이 실제로 쓴 답",
       "correct_answer": "정답",
       "error_type": "계산실수",
-      "feedback": "공식은 맞게 썼는데 마지막 나눗셈에서 실수했어요. 3 ÷ 6 = 2가 아니라 0.5예요."
+      "feedback": "공식은 맞게 썼는데 마지막 나눗셈에서 실수했어요. 3 ÷ 6 = 0.5예요."
     }
-  ],
-  "image_quality": "good"
+  ]
 }
 ```
 
-image_quality는 "good", "poor" (흐림/기울어짐), "unreadable" (판독 불가) 중 하나.
-판독 불가인 경우 problems는 빈 배열로, overall_feedback에 사유 기재.
+image_quality가 unreadable이면 problems는 빈 배열, overall_feedback에 사유 기재.
 """
 
 PATTERN_ANALYSIS_SYSTEM = """당신은 수학 과외 선생님의 학습 분석 도우미입니다.
