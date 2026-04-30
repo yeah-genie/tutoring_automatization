@@ -122,7 +122,7 @@ function processRow_(sheet, row) {
   sendDiscord_(`🔄 채점 시작 — ${student} / ${unit || '단원 미기재'} (파일 ${fileIds.length}개)`);
 
   const result = gradeWithClaude_(fileIds, unit);
-  saveWrongAnswers_(student, result);
+  saveWrongAnswers_(student, unit, result);
   sendGradingEmbed_(student, unit, result);
 
   Logger.log(`채점 완료 — ${student}: ${result.correct_count}/${result.total_problems}`);
@@ -199,36 +199,62 @@ function gradeWithClaude_(fileIds, unit) {
 }
 
 function parseJson_(text) {
-  const m = text.match(/\{[\s\S]*\}/);
+  // 1. 코드 펜스 제거: ```json ... ``` 또는 ``` ... ```
+  let s = text.trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+
+  // 2. 첫 { 부터 마지막 } 까지 추출 (앞뒤 잡설 제거)
+  const first = s.indexOf('{');
+  const last  = s.lastIndexOf('}');
+  if (first !== -1 && last !== -1 && last > first) {
+    s = s.slice(first, last + 1);
+  }
+
+  // 3. 그대로 파싱 시도
+  try { return JSON.parse(s); } catch (_) {}
+
+  // 4. LaTeX/수식 이스케이프 문제 흔하게 발생 → 백슬래시 보정 후 재시도
+  //    예: "\frac" 처럼 JSON이 모르는 escape 시퀀스 → \\frac 으로 바꿔줌
   try {
-    return JSON.parse(m ? m[0] : text);
-  } catch (_) {
-    return { problems: [], total_problems: 0, correct_count: 0, overall_feedback: text.slice(0, 200) };
+    const fixed = s.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+    return JSON.parse(fixed);
+  } catch (err) {
+    Logger.log('JSON 파싱 실패: ' + err + '\n원본 응답 앞 500자: ' + text.slice(0, 500));
+    return { problems: [], total_problems: 0, correct_count: 0, overall_feedback: '(JSON 파싱 실패 — 실행 로그 확인)' };
   }
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 7. 오답노트 시트 저장 (오답만)
-// 열: 학생이름 / 문제번호 / 정답여부 / 오답유형 / 첨삭자 / AI해설
+// 7. 오답노트 시트 저장 (오답만, 문제별로 한 행씩)
+// 열: 제출ID / 문제번호 / 학생답안 / 정답 / 오답유형 / AI해설 / 복습완료
 // ═══════════════════════════════════════════════════════════════
-function saveWrongAnswers_(student, result) {
+function saveWrongAnswers_(student, unit, result) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(WRONG_ANSWER_SHEET);
   if (!sheet) { Logger.log(`시트 "${WRONG_ANSWER_SHEET}" 없음 → 저장 건너뜀`); return; }
+
+  const displayUnit = result.inferred_unit || unit || '미기재';
+  const ts = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm');
+  const submissionId = `${student} | ${displayUnit} | ${ts}`;
 
   const rows = (result.problems || [])
     .filter(p => !p.is_correct)
     .map(p => [
-      student,
+      submissionId,
       p.problem_number || '',
-      'X',
-      p.error_type || '',
-      'AI',
-      p.feedback || '',
+      p.student_answer  || '',
+      p.correct_answer  || '',
+      p.error_type      || '',
+      p.feedback        || '',
+      '',  // 복습완료 — 학생/선생님이 수동 체크
     ]);
 
   if (rows.length > 0) {
-    sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, 6).setValues(rows);
-    Logger.log(`오답노트에 ${rows.length}행 추가`);
+    sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, 7).setValues(rows);
+    Logger.log(`오답노트에 ${rows.length}행 추가 (제출ID: ${submissionId})`);
+  } else {
+    Logger.log('오답 없음 → 오답노트 추가 안 함');
   }
 }
 
@@ -261,6 +287,8 @@ function sendGradingEmbed_(student, unit, result) {
   }
   const typeStr = Object.entries(typeCounts).map(([k, v]) => `${k} ${v}`).join(' / ') || '없음';
   const displayUnit = result.inferred_unit || unit || '미기재';
+  // Discord embed 필드는 1024자 제한 — 넘치면 잘라야 embed 자체가 안 깨짐
+  const overall = (result.overall_feedback || '—').toString().slice(0, 1000);
 
   const embed = {
     title: `✅ 채점 완료 — ${student}`,
@@ -270,7 +298,7 @@ function sendGradingEmbed_(student, unit, result) {
       { name: '점수',      value: `${correct}/${total} (${pct}%)`,  inline: true  },
       { name: '오답',      value: `${wrong}건`,                     inline: true  },
       { name: '오답 유형', value: typeStr,                          inline: false },
-      { name: '종합 피드백', value: result.overall_feedback || '—', inline: false },
+      { name: '종합 피드백', value: overall,                        inline: false },
     ],
   };
 
@@ -309,7 +337,9 @@ function sendGradingEmbed_(student, unit, result) {
 // ═══════════════════════════════════════════════════════════════
 const GRADING_SYSTEM = `당신은 수학 과외 선생님의 숙제 채점 도우미입니다.
 학생이 제출한 숙제 사진/PDF를 분석하여 정확하고 친절한 피드백을 제공합니다.
-반드시 JSON 형식으로만 응답하고, JSON 외 다른 텍스트는 포함하지 마세요.`;
+반드시 순수 JSON 객체 하나만 응답하세요. 마크다운 코드블록(\`\`\`json) 으로 감싸지 말고,
+설명/주석/앞뒤 텍스트도 절대 추가하지 마세요. 응답은 { 로 시작해서 } 로 끝나야 합니다.
+문자열 안에 백슬래시를 쓸 때는 반드시 \\\\ 처럼 이스케이프하세요.`;
 
 const GRADING_PROMPT = `다음 숙제 이미지/PDF를 분석해서 아래 JSON 형식으로만 응답해주세요.
 
