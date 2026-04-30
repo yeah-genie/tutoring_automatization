@@ -69,9 +69,19 @@ function setupTrigger() {
 // ═══════════════════════════════════════════════════════════════
 function onFormSubmit(e) {
   try {
-    const sheet = e.range.getSheet();
-    const row   = e.range.getRow();
-    Logger.log(`폼 제출 감지: 시트=${sheet.getName()}, 행=${row}`);
+    let sheet, row;
+    if (e && e.range) {
+      sheet = e.range.getSheet();
+      row   = e.range.getRow();
+      Logger.log(`폼 제출 감지: 시트=${sheet.getName()}, 행=${row}`);
+    } else {
+      // 에디터에서 수동 실행한 경우 — 마지막 폼 행으로 폴백
+      sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FORM_RESPONSE_SHEET);
+      if (!sheet) throw new Error(`시트 "${FORM_RESPONSE_SHEET}" 없음`);
+      row = sheet.getLastRow();
+      if (row < 2) throw new Error('처리할 폼 응답이 없어요.');
+      Logger.log(`수동 실행 → 마지막 행(${row}) 처리`);
+    }
     processRow_(sheet, row);
   } catch (err) {
     Logger.log('onFormSubmit 오류: ' + err.stack);
