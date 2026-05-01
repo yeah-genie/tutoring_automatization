@@ -5,18 +5,23 @@
 //
 // 설정 순서 (한 번만):
 //   1. 스크립트 속성에 ANTHROPIC_API_KEY, DISCORD_WEBHOOK_URL 추가
-//   2. testDiscord() 실행 → Discord에 테스트 메시지 오는지 확인
-//   3. setupTrigger() 실행 → 폼 제출 트리거 자동 설치
-//   4. 폼에 실제 제출하면 자동 처리됨
+//   2. testDiscord()  → Discord에 테스트 메시지 오는지 확인
+//   3. setupSheets()  → 오답노트 헤더 9컬럼으로 설정
+//   4. setupTrigger() → 폼 제출 + 주간 리포트 트리거 자동 설치
+//   5. 폼에 실제 제출하면 자동 처리됨
 //
-// 디버깅:
+// 디버깅 / 수동 실행:
 //   - processLatestRow() : 트리거 없이 마지막 폼 응답 행을 수동 재처리
+//   - weeklyReport()     : 주간 리포트 즉시 생성
 //   - 실행 로그(보기 → 실행) 에서 단계별 진행 확인
 // ═══════════════════════════════════════════════════════════════
 
 const FORM_RESPONSE_SHEET = '설문지 응답 시트1';
 const WRONG_ANSWER_SHEET  = '오답노트';
 const CLAUDE_MODEL        = 'claude-opus-4-5';
+
+// 오답노트 헤더 — setupSheets() 가 이 순서대로 1행에 씁니다
+const WRONG_ANSWER_HEADERS = ['학생', '단원', '날짜', '문제번호', '학생답안', '정답', '오답유형', 'AI해설', '복습완료'];
 
 // 폼 응답 시트의 열 인덱스 (1-based) — 시트 구조 바뀌면 여기만 수정
 const COL = {
@@ -44,24 +49,45 @@ function testDiscord() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 2. 트리거 자동 설치 — 한 번만 실행
+// 2. 오답노트 헤더 설정 — 한 번만 실행 (또는 헤더 깨졌을 때)
+// ═══════════════════════════════════════════════════════════════
+function setupSheets() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(WRONG_ANSWER_SHEET);
+  if (!sheet) throw new Error(`시트 "${WRONG_ANSWER_SHEET}" 가 없어요. 시트 탭을 먼저 만들어주세요.`);
+
+  sheet.getRange(1, 1, 1, WRONG_ANSWER_HEADERS.length)
+    .setValues([WRONG_ANSWER_HEADERS])
+    .setFontWeight('bold');
+  sheet.setFrozenRows(1);
+
+  Logger.log('오답노트 헤더 설정 완료: ' + WRONG_ANSWER_HEADERS.join(' / '));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 3. 트리거 자동 설치 — 한 번만 실행
+//    - onFormSubmit: 폼 제출 시 자동 채점
+//    - weeklyReport: 매주 일요일 저녁 8시 주간 리포트
 // ═══════════════════════════════════════════════════════════════
 function setupTrigger() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  // 기존 onFormSubmit 트리거 제거 (중복 방지)
+  // 기존 트리거 제거 (중복 방지)
   ScriptApp.getProjectTriggers()
-    .filter(t => t.getHandlerFunction() === 'onFormSubmit')
+    .filter(t => ['onFormSubmit', 'weeklyReport'].indexOf(t.getHandlerFunction()) !== -1)
     .forEach(t => ScriptApp.deleteTrigger(t));
 
-  // 새 트리거 설치
-  ScriptApp.newTrigger('onFormSubmit')
-    .forSpreadsheet(ss)
-    .onFormSubmit()
+  // 폼 제출 트리거
+  ScriptApp.newTrigger('onFormSubmit').forSpreadsheet(ss).onFormSubmit().create();
+
+  // 주간 리포트 — 일요일 20시
+  ScriptApp.newTrigger('weeklyReport')
+    .timeBased()
+    .onWeekDay(ScriptApp.WeekDay.SUNDAY)
+    .atHour(20)
     .create();
 
-  Logger.log('폼 제출 트리거 설치 완료. 이제 폼에 제출하면 자동 채점돼요.');
-  sendDiscord_('🔧 폼 제출 트리거 설치 완료. 이제 폼 제출 시 자동 채점됩니다.');
+  Logger.log('트리거 설치 완료: onFormSubmit (폼 제출), weeklyReport (일요일 20시)');
+  sendDiscord_('🔧 트리거 설치 완료\n• 폼 제출 시 자동 채점\n• 매주 일요일 저녁 8시 주간 리포트');
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -250,38 +276,95 @@ function repairJsonStrings_(s) {
 
 // ═══════════════════════════════════════════════════════════════
 // 7. 오답노트 시트 저장 (오답만, 문제별로 한 행씩)
-// 열: 제출ID / 문제번호 / 학생답안 / 정답 / 오답유형 / AI해설 / 복습완료
+// 열: 학생 / 단원 / 날짜 / 문제번호 / 학생답안 / 정답 / 오답유형 / AI해설 / 복습완료
 // ═══════════════════════════════════════════════════════════════
 function saveWrongAnswers_(student, unit, result) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(WRONG_ANSWER_SHEET);
   if (!sheet) { Logger.log(`시트 "${WRONG_ANSWER_SHEET}" 없음 → 저장 건너뜀`); return; }
 
   const displayUnit = result.inferred_unit || unit || '미기재';
-  const ts = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm');
-  const submissionId = `${student} | ${displayUnit} | ${ts}`;
+  const date = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
 
   const rows = (result.problems || [])
     .filter(p => !p.is_correct)
     .map(p => [
-      submissionId,
+      student,
+      displayUnit,
+      date,
       p.problem_number || '',
-      p.student_answer  || '',
-      p.correct_answer  || '',
-      p.error_type      || '',
-      p.feedback        || '',
+      p.student_answer || '',
+      p.correct_answer || '',
+      p.error_type     || '',
+      p.feedback       || '',
       '',  // 복습완료 — 학생/선생님이 수동 체크
     ]);
 
   if (rows.length > 0) {
-    sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, 7).setValues(rows);
-    Logger.log(`오답노트에 ${rows.length}행 추가 (제출ID: ${submissionId})`);
+    sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, WRONG_ANSWER_HEADERS.length).setValues(rows);
+    Logger.log(`오답노트에 ${rows.length}행 추가 (${student} / ${displayUnit} / ${date})`);
   } else {
     Logger.log('오답 없음 → 오답노트 추가 안 함');
   }
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 8. Discord 알림
+// 8. 주간 리포트 — 매주 일요일 20시 자동 실행 (트리거)
+//    수동 실행: 함수 드롭다운에서 weeklyReport 선택 → 실행
+// ═══════════════════════════════════════════════════════════════
+function weeklyReport() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(WRONG_ANSWER_SHEET);
+  if (!sheet || sheet.getLastRow() < 2) {
+    sendDiscord_('📊 주간 리포트 — 등록된 오답이 없어요.');
+    return;
+  }
+
+  const lastCol = WRONG_ANSWER_HEADERS.length;
+  const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, lastCol).getValues();
+
+  const tz = Session.getScriptTimeZone();
+  const today   = new Date();
+  const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  // 학생별 집계
+  const byStudent = {};
+  for (const r of data) {
+    const student = r[0];
+    const unit    = r[1];
+    const dateStr = r[2];
+    const errType = r[6];
+    if (!student || !dateStr) continue;
+
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime()) || d < weekAgo) continue;
+
+    if (!byStudent[student]) byStudent[student] = { count: 0, types: {}, units: {} };
+    byStudent[student].count++;
+    if (unit)    byStudent[student].units[unit]    = (byStudent[student].units[unit]    || 0) + 1;
+    if (errType) byStudent[student].types[errType] = (byStudent[student].types[errType] || 0) + 1;
+  }
+
+  const fmt = d => Utilities.formatDate(d, tz, 'M/d');
+  const range = `${fmt(weekAgo)} ~ ${fmt(today)}`;
+
+  if (Object.keys(byStudent).length === 0) {
+    sendDiscord_(`📊 **주간 리포트** (${range})\n이번 주 등록된 오답이 없어요.`);
+    return;
+  }
+
+  const lines = [`📊 **주간 리포트** (${range})\n`];
+  for (const [student, s] of Object.entries(byStudent)) {
+    const topType = Object.entries(s.types).sort((a, b) => b[1] - a[1])[0];
+    const typeStr = topType ? `${topType[0]} ${topType[1]}건` : '없음';
+    const units   = Object.keys(s.units).slice(0, 3).join(', ') || '—';
+    lines.push(`• **${student}** — 오답 ${s.count}건 / 단원: ${units} / 자주 틀린 유형: ${typeStr}`);
+  }
+
+  sendDiscord_(lines.join('\n'));
+  Logger.log(`주간 리포트 전송 완료 — 학생 ${Object.keys(byStudent).length}명`);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 9. Discord 알림
 // ═══════════════════════════════════════════════════════════════
 function sendDiscord_(text) {
   const url = getProp_('DISCORD_WEBHOOK_URL');
