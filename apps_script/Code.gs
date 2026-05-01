@@ -366,22 +366,52 @@ function weeklyReport() {
 // ═══════════════════════════════════════════════════════════════
 // 9. Discord 알림
 // ═══════════════════════════════════════════════════════════════
-function sendDiscord_(text) {
+
+// 공통 전송기 — 429 (rate limit) 면 Retry-After 따라 최대 3회 재시도
+function discordPost_(payload) {
   const url = getProp_('DISCORD_WEBHOOK_URL');
-  const res = UrlFetchApp.fetch(url, {
-    method: 'post',
-    contentType: 'application/json',
-    payload: JSON.stringify({ content: text }),
-    muteHttpExceptions: true,
-  });
-  const code = res.getResponseCode();
-  if (code >= 300) {
-    Logger.log(`Discord 텍스트 전송 실패 (${code}): ${res.getContentText().slice(0, 300)}`);
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const res = UrlFetchApp.fetch(url, {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true,
+    });
+    const code = res.getResponseCode();
+    if (code < 300) return true;
+
+    if (code === 429) {
+      // Discord 가 응답 본문에 retry_after(초) 를 줌. 없으면 헤더, 둘 다 없으면 지수 백오프
+      let waitMs = 0;
+      try {
+        const body = JSON.parse(res.getContentText());
+        if (body && body.retry_after) waitMs = Math.ceil(body.retry_after * 1000);
+      } catch (_) {}
+      if (!waitMs) {
+        const h = res.getAllHeaders();
+        const ra = parseFloat(h['Retry-After'] || h['retry-after'] || '0');
+        if (ra) waitMs = Math.ceil(ra * 1000);
+      }
+      if (!waitMs) waitMs = 2000 * attempt;
+      waitMs = Math.min(waitMs, 30000);
+
+      Logger.log(`Discord 429 — ${waitMs}ms 대기 후 재시도 (${attempt}/3)`);
+      Utilities.sleep(waitMs);
+      continue;
+    }
+
+    Logger.log(`Discord 전송 실패 (${code}): ${res.getContentText().slice(0, 300)}`);
+    return false;
   }
+  Logger.log('Discord 전송 최종 실패 — 3회 재시도 후 포기');
+  return false;
+}
+
+function sendDiscord_(text) {
+  return discordPost_({ content: text });
 }
 
 function sendGradingEmbed_(student, unit, result) {
-  const url = getProp_('DISCORD_WEBHOOK_URL');
   const total   = result.total_problems || 0;
   const correct = result.correct_count  || 0;
   const wrong   = total - correct;
@@ -396,7 +426,6 @@ function sendGradingEmbed_(student, unit, result) {
   }
   const typeStr = Object.entries(typeCounts).map(([k, v]) => `${k} ${v}`).join(' / ') || '없음';
   const displayUnit = result.inferred_unit || unit || '미기재';
-  // Discord embed 필드는 1024자 제한 — 넘치면 잘라야 embed 자체가 안 깨짐
   const overall = (result.overall_feedback || '—').toString().slice(0, 1000);
 
   const embed = {
@@ -411,16 +440,9 @@ function sendGradingEmbed_(student, unit, result) {
     ],
   };
 
-  const res = UrlFetchApp.fetch(url, {
-    method: 'post',
-    contentType: 'application/json',
-    payload: JSON.stringify({ embeds: [embed] }),
-    muteHttpExceptions: true,
-  });
-  const code = res.getResponseCode();
-  if (code >= 300) {
-    Logger.log(`Discord embed 전송 실패 (${code}): ${res.getContentText().slice(0, 500)}`);
-    // embed 가 거절되면 텍스트로라도 알림
+  const ok = discordPost_({ embeds: [embed] });
+  if (!ok) {
+    // embed 거절 시 텍스트로라도
     sendDiscord_(`✅ 채점 완료 — ${student} | ${displayUnit} | ${correct}/${total} (${pct}%)`);
   }
 
