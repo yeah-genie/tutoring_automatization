@@ -199,31 +199,53 @@ function gradeWithClaude_(fileIds, unit) {
 }
 
 function parseJson_(text) {
-  // 1. 코드 펜스 제거: ```json ... ``` 또는 ``` ... ```
+  // 1. 코드 펜스 제거
   let s = text.trim()
     .replace(/^```(?:json)?\s*/i, '')
     .replace(/\s*```$/i, '')
     .trim();
 
-  // 2. 첫 { 부터 마지막 } 까지 추출 (앞뒤 잡설 제거)
+  // 2. 첫 { ~ 마지막 } 추출 (앞뒤 잡설 제거)
   const first = s.indexOf('{');
   const last  = s.lastIndexOf('}');
-  if (first !== -1 && last !== -1 && last > first) {
-    s = s.slice(first, last + 1);
-  }
+  if (first !== -1 && last !== -1 && last > first) s = s.slice(first, last + 1);
 
-  // 3. 그대로 파싱 시도
+  // 3. 그대로 시도
   try { return JSON.parse(s); } catch (_) {}
 
-  // 4. LaTeX/수식 이스케이프 문제 흔하게 발생 → 백슬래시 보정 후 재시도
-  //    예: "\frac" 처럼 JSON이 모르는 escape 시퀀스 → \\frac 으로 바꿔줌
+  // 4. 문자열 안의 raw 제어문자(줄바꿈/탭) 를 escape 시퀀스로 변환
+  //    JSON 스펙상 문자열 안에서는 \n/\t/\r 가 escape 되어야 하는데
+  //    Claude가 종종 raw 로 넣어서 깨짐
+  try { return JSON.parse(repairJsonStrings_(s)); } catch (_) {}
+
+  // 5. 백슬래시 보정 (LaTeX \frac 등) 까지 추가
   try {
-    const fixed = s.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
-    return JSON.parse(fixed);
+    const repaired = repairJsonStrings_(s).replace(/\\(?!["\\\/bfnrtu])/g, '\\\\');
+    return JSON.parse(repaired);
   } catch (err) {
-    Logger.log('JSON 파싱 실패: ' + err + '\n원본 응답 앞 500자: ' + text.slice(0, 500));
+    Logger.log('JSON 파싱 최종 실패: ' + err + '\n원본 응답 앞 1500자:\n' + text.slice(0, 1500));
     return { problems: [], total_problems: 0, correct_count: 0, overall_feedback: '(JSON 파싱 실패 — 실행 로그 확인)' };
   }
+}
+
+// JSON 문자열 리터럴 안의 raw 제어문자만 escape — 구조적 줄바꿈은 그대로
+function repairJsonStrings_(s) {
+  let out = '';
+  let inString = false;
+  let escaped = false;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (escaped) { out += c; escaped = false; continue; }
+    if (c === '\\') { out += c; escaped = true; continue; }
+    if (c === '"')  { out += c; inString = !inString; continue; }
+    if (inString) {
+      if (c === '\n') { out += '\\n'; continue; }
+      if (c === '\r') { out += '\\r'; continue; }
+      if (c === '\t') { out += '\\t'; continue; }
+    }
+    out += c;
+  }
+  return out;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -263,12 +285,16 @@ function saveWrongAnswers_(student, unit, result) {
 // ═══════════════════════════════════════════════════════════════
 function sendDiscord_(text) {
   const url = getProp_('DISCORD_WEBHOOK_URL');
-  UrlFetchApp.fetch(url, {
+  const res = UrlFetchApp.fetch(url, {
     method: 'post',
     contentType: 'application/json',
     payload: JSON.stringify({ content: text }),
     muteHttpExceptions: true,
   });
+  const code = res.getResponseCode();
+  if (code >= 300) {
+    Logger.log(`Discord 텍스트 전송 실패 (${code}): ${res.getContentText().slice(0, 300)}`);
+  }
 }
 
 function sendGradingEmbed_(student, unit, result) {
@@ -302,12 +328,18 @@ function sendGradingEmbed_(student, unit, result) {
     ],
   };
 
-  UrlFetchApp.fetch(url, {
+  const res = UrlFetchApp.fetch(url, {
     method: 'post',
     contentType: 'application/json',
     payload: JSON.stringify({ embeds: [embed] }),
     muteHttpExceptions: true,
   });
+  const code = res.getResponseCode();
+  if (code >= 300) {
+    Logger.log(`Discord embed 전송 실패 (${code}): ${res.getContentText().slice(0, 500)}`);
+    // embed 가 거절되면 텍스트로라도 알림
+    sendDiscord_(`✅ 채점 완료 — ${student} | ${displayUnit} | ${correct}/${total} (${pct}%)`);
+  }
 
   // 틀린 문제 상세
   const wrongList = (result.problems || []).filter(p => !p.is_correct);
@@ -337,9 +369,13 @@ function sendGradingEmbed_(student, unit, result) {
 // ═══════════════════════════════════════════════════════════════
 const GRADING_SYSTEM = `당신은 수학 과외 선생님의 숙제 채점 도우미입니다.
 학생이 제출한 숙제 사진/PDF를 분석하여 정확하고 친절한 피드백을 제공합니다.
-반드시 순수 JSON 객체 하나만 응답하세요. 마크다운 코드블록(\`\`\`json) 으로 감싸지 말고,
-설명/주석/앞뒤 텍스트도 절대 추가하지 마세요. 응답은 { 로 시작해서 } 로 끝나야 합니다.
-문자열 안에 백슬래시를 쓸 때는 반드시 \\\\ 처럼 이스케이프하세요.`;
+
+응답은 반드시 순수 JSON 객체 하나만 출력하세요. 다음 규칙을 절대 어기지 마세요:
+- 마크다운 코드블록(\`\`\`json) 으로 감싸지 마세요. { 로 시작해서 } 로 끝나야 합니다.
+- 모든 문자열 값은 한 줄로 작성하세요. 줄바꿈, 탭 문자를 절대 넣지 마세요.
+- 문자열 안에 큰따옴표(") 를 쓰지 마세요. 인용이 필요하면 작은따옴표(') 또는 「」 를 쓰세요.
+- 백슬래시(\\) 를 쓸 때는 반드시 \\\\ 로 이스케이프하세요. (LaTeX 수식은 쓰지 말고 일반 글로 풀어 설명하세요.)
+- feedback 은 짧고 간결하게 한 문장으로 (가능하면 80자 이내).`;
 
 const GRADING_PROMPT = `다음 숙제 이미지/PDF를 분석해서 아래 JSON 형식으로만 응답해주세요.
 
