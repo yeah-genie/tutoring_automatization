@@ -7,7 +7,7 @@
 ## 설정 (한 번만, 약 5분)
 
 ### 1. Apps Script 코드 붙여넣기
-1. [구글 스프레드시트](https://docs.google.com/spreadsheets/d/1wbewy55HFxzKoRRtQdd5G5g9YG_6D19wKtcilPf66Z8/edit) 열기
+1. 본인 구글 스프레드시트 열기
 2. 메뉴 → **확장 프로그램 → Apps Script**
 3. 기본 `Code.gs` 내용을 전부 지우고, 이 저장소의 `apps_script/Code.gs` 내용을 붙여넣기 → 저장 (Ctrl+S)
 
