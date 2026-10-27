@@ -17,10 +17,20 @@ Curricula included: **IGCSE 0580, IB Maths AA and AI (SL/HL), AP Calculus AB/BC,
 
 Messages in English or Korean (`--lang ko`).
 
-> Status: early. Works today for people comfortable installing Python and LaTeX, or using Claude Code.
-> A no-install version for teachers is planned.
+## No install: check a worksheet you already have
 
-## Quick start
+Upload any worksheet + answer key to the AI chat you already use and ask it to check it.
+
+- **ChatGPT**: the *Worksheet Checker* GPT (link coming soon). Setup files: [`integrations/chatgpt/`](integrations/chatgpt/)
+- **Claude**: upload [`integrations/claude-skill/worksheet-check.zip`](integrations/claude-skill/worksheet-check.zip) as a skill, then ask "check this worksheet".
+
+Try it on [`examples/demo_worksheet.pdf`](examples/demo_worksheet.pdf): it has four planted mistakes
+(a rounding error, a wrong key, an HL question on an SL sheet, and a wrong mark total).
+
+Both use the single-file engine in [`integrations/engine/`](integrations/engine/) (sympy only).
+Print checks (LaTeX compile, page images) need the full install below.
+
+## Full install (for making quizzes, with print checks)
 
 ```bash
 pip install git+https://github.com/yeah-genie/tutoring_automatization

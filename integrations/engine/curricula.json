@@ -1,0 +1,1423 @@
+{
+ "ap_calculus": {
+  "name": "AP Calculus AB/BC",
+  "board": "College Board AP",
+  "cumulative": true,
+  "chapters": {
+   "u1_limits": {
+    "title": "Unit 1 Limits and Continuity",
+    "keywords": [
+     "\\lim",
+     "limit",
+     "continuity",
+     "continuous at",
+     "intermediate value theorem",
+     "squeeze theorem",
+     "removable discontinuity"
+    ]
+   },
+   "u2_diff_basics": {
+    "title": "Unit 2 Differentiation: Definition and Fundamental Properties",
+    "keywords": [
+     "derivative",
+     "differentiable",
+     "f'(",
+     "\\frac{d",
+     "\\frac{\\mathrm{d}",
+     "product rule",
+     "quotient rule",
+     "power rule"
+    ]
+   },
+   "u3_diff_composite": {
+    "title": "Unit 3 Differentiation: Composite, Implicit, and Inverse Functions",
+    "keywords": [
+     "chain rule",
+     "implicit differentiation",
+     "\\frac{d^2",
+     "second derivative",
+     "inverse trigonometric",
+     "\\arcsin",
+     "\\arctan"
+    ]
+   },
+   "u4_contextual": {
+    "title": "Unit 4 Contextual Applications of Differentiation",
+    "keywords": [
+     "related rates",
+     "linear approximation",
+     "local linearity",
+     "l'hospital",
+     "l'hôpital",
+     "l'hopital",
+     "velocity",
+     "acceleration"
+    ]
+   },
+   "u5_analytical": {
+    "title": "Unit 5 Analytical Applications of Differentiation",
+    "keywords": [
+     "mean value theorem",
+     "extreme value theorem",
+     "relative maximum",
+     "relative minimum",
+     "critical point",
+     "concave up",
+     "concave down",
+     "point of inflection",
+     "optimization",
+     "candidates test"
+    ]
+   },
+   "u6_integration": {
+    "title": "Unit 6 Integration and Accumulation of Change",
+    "keywords": [
+     "\\int",
+     "integral",
+     "antiderivative",
+     "riemann sum",
+     "trapezoidal sum",
+     "fundamental theorem of calculus",
+     "accumulation function",
+     "u-substitution"
+    ]
+   },
+   "u7_diff_eq": {
+    "title": "Unit 7 Differential Equations",
+    "keywords": [
+     "differential equation",
+     "slope field",
+     "separation of variables",
+     "separable",
+     "exponential growth"
+    ]
+   },
+   "u8_applications": {
+    "title": "Unit 8 Applications of Integration",
+    "keywords": [
+     "average value of a function",
+     "area between",
+     "volume",
+     "disc method",
+     "disk method",
+     "washer method",
+     "cross section"
+    ]
+   },
+   "bc_techniques": {
+    "title": "BC-only topics in Units 6-8: integration by parts, partial fractions, improper integrals, Euler's method, logistic models, arc length",
+    "keywords": [
+     "integration by parts",
+     "partial fraction",
+     "improper integral",
+     "euler's method",
+     "euler’s method",
+     "logistic",
+     "arc length"
+    ]
+   },
+   "bc_u9_parametric_polar": {
+    "title": "Unit 9 (BC) Parametric Equations, Polar Coordinates, and Vector-Valued Functions",
+    "requires": [
+     "u1_limits",
+     "u2_diff_basics",
+     "u3_diff_composite",
+     "u4_contextual",
+     "u5_analytical",
+     "u6_integration",
+     "u7_diff_eq",
+     "u8_applications",
+     "bc_techniques"
+    ],
+    "keywords": [
+     "parametric",
+     "polar",
+     "r(\\theta)",
+     "r = ",
+     "vector-valued",
+     "\\langle"
+    ]
+   },
+   "bc_u10_series": {
+    "title": "Unit 10 (BC) Infinite Sequences and Series",
+    "requires": [
+     "u1_limits",
+     "u2_diff_basics",
+     "u3_diff_composite",
+     "u4_contextual",
+     "u5_analytical",
+     "u6_integration",
+     "u7_diff_eq",
+     "u8_applications",
+     "bc_techniques"
+    ],
+    "keywords": [
+     "converge",
+     "diverge",
+     "series",
+     "ratio test",
+     "integral test",
+     "comparison test",
+     "alternating series",
+     "taylor",
+     "maclaurin",
+     "radius of convergence",
+     "interval of convergence",
+     "lagrange error",
+     "\\sum_{n"
+    ]
+   }
+  }
+ },
+ "ap_precalculus": {
+  "name": "AP Precalculus",
+  "board": "College Board AP",
+  "cumulative": true,
+  "chapters": {
+   "u1_polynomial_rational": {
+    "title": "Unit 1 Polynomial and Rational Functions",
+    "keywords": [
+     "average rate of change",
+     "end behavior",
+     "rational function",
+     "vertical asymptote",
+     "horizontal asymptote",
+     "slant asymptote",
+     "binomial theorem",
+     "polynomial long division",
+     "multiplicity"
+    ]
+   },
+   "u2_exponential_log": {
+    "title": "Unit 2 Exponential and Logarithmic Functions",
+    "keywords": [
+     "arithmetic sequence",
+     "geometric sequence",
+     "exponential function",
+     "logarithm",
+     "\\log",
+     "\\ln",
+     "inverse function",
+     "semi-log",
+     "composition"
+    ]
+   },
+   "u3_trig_polar": {
+    "title": "Unit 3 Trigonometric and Polar Functions",
+    "keywords": [
+     "\\sin",
+     "\\cos",
+     "\\tan",
+     "radian",
+     "unit circle",
+     "sinusoidal",
+     "amplitude",
+     "period",
+     "phase shift",
+     "\\sec",
+     "\\csc",
+     "\\cot",
+     "polar",
+     "\\arcsin",
+     "\\arccos",
+     "\\arctan"
+    ]
+   },
+   "u4_parameters_vectors_matrices": {
+    "title": "Unit 4 Functions Involving Parameters, Vectors, and Matrices (not on the AP exam)",
+    "keywords": [
+     "parametric",
+     "implicitly defined",
+     "conic",
+     "ellipse",
+     "hyperbola",
+     "vector",
+     "matrix",
+     "matrices",
+     "determinant",
+     "\\begin{pmatrix}",
+     "\\begin{bmatrix}"
+    ]
+   }
+  }
+ },
+ "ap_statistics": {
+  "name": "AP Statistics",
+  "board": "College Board AP",
+  "cumulative": true,
+  "chapters": {
+   "u1_one_variable": {
+    "title": "Unit 1 Exploring One-Variable Data",
+    "keywords": [
+     "histogram",
+     "boxplot",
+     "box plot",
+     "interquartile range",
+     "standard deviation",
+     "z-score",
+     "outlier",
+     "normal model"
+    ]
+   },
+   "u2_two_variable": {
+    "title": "Unit 2 Exploring Two-Variable Data",
+    "keywords": [
+     "scatterplot",
+     "correlation",
+     "least-squares regression",
+     "residual",
+     "r^2",
+     "coefficient of determination",
+     "two-way table"
+    ]
+   },
+   "u3_collecting_data": {
+    "title": "Unit 3 Collecting Data",
+    "keywords": [
+     "simple random sample",
+     "stratified",
+     "cluster sample",
+     "systematic sample",
+     "bias",
+     "experiment",
+     "observational study",
+     "blocking",
+     "placebo",
+     "random assignment"
+    ]
+   },
+   "u4_probability": {
+    "title": "Unit 4 Probability, Random Variables, and Probability Distributions",
+    "keywords": [
+     "conditional probability",
+     "independent events",
+     "random variable",
+     "expected value",
+     "binomial",
+     "geometric distribution"
+    ]
+   },
+   "u5_sampling_distributions": {
+    "title": "Unit 5 Sampling Distributions",
+    "keywords": [
+     "sampling distribution",
+     "central limit theorem",
+     "standard error",
+     "unbiased estimator"
+    ]
+   },
+   "u6_proportions": {
+    "title": "Unit 6 Inference for Categorical Data: Proportions",
+    "keywords": [
+     "confidence interval",
+     "\\hat{p}",
+     "one-proportion z",
+     "two-proportion z",
+     "null hypothesis",
+     "p-value",
+     "type i error",
+     "type ii error",
+     "power"
+    ]
+   },
+   "u7_means": {
+    "title": "Unit 7 Inference for Quantitative Data: Means",
+    "keywords": [
+     "t-interval",
+     "t-test",
+     "t distribution",
+     "degrees of freedom",
+     "paired t"
+    ]
+   },
+   "u8_chi_square": {
+    "title": "Unit 8 Inference for Categorical Data: Chi-Square",
+    "keywords": [
+     "chi-square",
+     "\\chi^2",
+     "goodness of fit",
+     "test for independence",
+     "test for homogeneity"
+    ]
+   },
+   "u9_slopes": {
+    "title": "Unit 9 Inference for Quantitative Data: Slopes",
+    "keywords": [
+     "slope of the regression line",
+     "t-interval for the slope",
+     "test for the slope"
+    ]
+   }
+  }
+ },
+ "caie_9709": {
+  "name": "Cambridge International AS & A Level Mathematics 9709",
+  "board": "Cambridge International",
+  "syllabus_version": "2026-2027",
+  "chapters": {
+   "p1_quadratics": {
+    "title": "P1 1.1 Quadratics",
+    "keywords": [
+     "completing the square",
+     "discriminant",
+     "quadratic formula"
+    ]
+   },
+   "p1_functions": {
+    "title": "P1 1.2 Functions",
+    "keywords": [
+     "composite function",
+     "inverse function",
+     "f^{-1}",
+     "one-one",
+     "range of f",
+     "domain of f"
+    ]
+   },
+   "p1_coordinate_geometry": {
+    "title": "P1 1.3 Coordinate geometry (lines and circles)",
+    "keywords": [
+     "perpendicular bisector",
+     "equation of the circle",
+     "equation of a circle",
+     "midpoint"
+    ]
+   },
+   "p1_circular_measure": {
+    "title": "P1 1.4 Circular measure",
+    "keywords": [
+     "radian",
+     "arc length",
+     "area of the sector",
+     "sector"
+    ]
+   },
+   "p1_trigonometry": {
+    "title": "P1 1.5 Trigonometry",
+    "requires": [
+     "p1_circular_measure"
+    ],
+    "keywords": [
+     "\\sin",
+     "\\cos",
+     "\\tan",
+     "\\sin^{-1}",
+     "\\cos^{-1}",
+     "\\tan^{-1}",
+     "trigonometric identity"
+    ]
+   },
+   "p1_series": {
+    "title": "P1 1.6 Series (binomial expansion for positive integer n, arithmetic and geometric progressions)",
+    "keywords": [
+     "binomial expansion",
+     "\\binom",
+     "arithmetic progression",
+     "geometric progression",
+     "sum to infinity",
+     "common ratio"
+    ]
+   },
+   "p1_differentiation": {
+    "title": "P1 1.7 Differentiation",
+    "requires": [
+     "p1_quadratics",
+     "p1_functions",
+     "p1_coordinate_geometry"
+    ],
+    "keywords": [
+     "differentiate",
+     "derivative",
+     "\\frac{dy}{dx}",
+     "\\frac{\\mathrm{d}y}{\\mathrm{d}x}",
+     "dy/dx",
+     "stationary point",
+     "chain rule",
+     "rate of change",
+     "gradient of the curve",
+     "tangent to the curve",
+     "normal to the curve"
+    ]
+   },
+   "p1_integration": {
+    "title": "P1 1.8 Integration",
+    "requires": [
+     "p1_differentiation",
+     "p1_quadratics",
+     "p1_functions",
+     "p1_coordinate_geometry"
+    ],
+    "keywords": [
+     "\\int",
+     "integrate",
+     "integral",
+     "area under",
+     "volume of revolution",
+     "volume obtained"
+    ]
+   },
+   "p3_algebra": {
+    "title": "P3 3.1 Algebra: modulus, polynomial division, factor/remainder theorem, partial fractions, binomial for rational n",
+    "requires": [
+     "p1_quadratics",
+     "p1_functions",
+     "p1_series"
+    ],
+    "keywords": [
+     "modulus",
+     "|x",
+     "factor theorem",
+     "remainder theorem",
+     "partial fraction",
+     "polynomial division",
+     "(1+x)^{-",
+     "(1 + x)^{-"
+    ]
+   },
+   "p3_log_exp": {
+    "title": "P3 3.2 Logarithmic and exponential functions",
+    "keywords": [
+     "\\ln",
+     "\\log",
+     "logarithm",
+     "e^{x}",
+     "e^x",
+     "exponential"
+    ]
+   },
+   "p3_trigonometry": {
+    "title": "P3 3.3 Trigonometry: sec, cosec, cot, compound and double angles, R cos(x - a)",
+    "requires": [
+     "p1_trigonometry",
+     "p1_circular_measure"
+    ],
+    "keywords": [
+     "\\sec",
+     "\\csc",
+     "\\cosec",
+     "\\cot",
+     "compound angle",
+     "double angle",
+     "R\\cos",
+     "R \\cos",
+     "R\\sin",
+     "R \\sin"
+    ]
+   },
+   "p3_differentiation": {
+    "title": "P3 3.4 Differentiation: product, quotient, implicit, parametric; e^x, ln x, trig",
+    "requires": [
+     "p1_differentiation",
+     "p3_log_exp",
+     "p3_trigonometry"
+    ],
+    "keywords": [
+     "product rule",
+     "quotient rule",
+     "implicit",
+     "parametric"
+    ]
+   },
+   "p3_integration": {
+    "title": "P3 3.5 Integration: e^x, 1/x, trig, partial fractions, substitution, by parts, trapezium rule",
+    "requires": [
+     "p1_integration",
+     "p3_differentiation",
+     "p3_algebra"
+    ],
+    "keywords": [
+     "integration by parts",
+     "by parts",
+     "substitution",
+     "trapezium rule"
+    ]
+   },
+   "p3_numerical": {
+    "title": "P3 3.6 Numerical solution of equations",
+    "keywords": [
+     "iteration",
+     "iterative formula",
+     "change of sign",
+     "sign change",
+     "x_{n+1}"
+    ]
+   },
+   "p3_vectors": {
+    "title": "P3 3.7 Vectors",
+    "keywords": [
+     "vector",
+     "scalar product",
+     "position vector",
+     "\\overrightarrow",
+     "vector equation",
+     "skew",
+     "\\mathbf{i}"
+    ]
+   },
+   "p3_differential_equations": {
+    "title": "P3 3.8 Differential equations",
+    "requires": [
+     "p3_integration"
+    ],
+    "keywords": [
+     "differential equation",
+     "separating the variables",
+     "general solution",
+     "particular solution"
+    ]
+   },
+   "p3_complex": {
+    "title": "P3 3.9 Complex numbers",
+    "keywords": [
+     "complex number",
+     "argand",
+     "modulus-argument",
+     "conjugate",
+     "\\arg",
+     "\\mathrm{i}",
+     "\\operatorname{Re}",
+     "\\operatorname{Im}"
+    ]
+   },
+   "m1_forces": {
+    "title": "M1 4.1 Forces and equilibrium",
+    "keywords": [
+     "equilibrium",
+     "resultant force",
+     "friction",
+     "coefficient of friction",
+     "normal reaction",
+     "limiting",
+     "tension"
+    ]
+   },
+   "m1_kinematics": {
+    "title": "M1 4.2 Kinematics of motion in a straight line",
+    "keywords": [
+     "velocity",
+     "acceleration",
+     "displacement",
+     "velocity-time graph",
+     "constant acceleration",
+     "suvat"
+    ]
+   },
+   "m1_momentum": {
+    "title": "M1 4.3 Momentum",
+    "keywords": [
+     "momentum",
+     "collision",
+     "coalesce",
+     "impulse"
+    ]
+   },
+   "m1_newton": {
+    "title": "M1 4.4 Newton's laws of motion",
+    "requires": [
+     "m1_forces",
+     "m1_kinematics"
+    ],
+    "keywords": [
+     "newton's second law",
+     "newton’s second law",
+     "connected particles",
+     "pulley",
+     "F = ma",
+     "F=ma"
+    ]
+   },
+   "m1_energy": {
+    "title": "M1 4.5 Energy, work and power",
+    "requires": [
+     "m1_forces",
+     "m1_kinematics"
+    ],
+    "keywords": [
+     "work done",
+     "kinetic energy",
+     "potential energy",
+     "power",
+     "watt",
+     "work-energy"
+    ]
+   },
+   "s1_data": {
+    "title": "S1 5.1 Representation of data",
+    "keywords": [
+     "stem-and-leaf",
+     "box-and-whisker",
+     "cumulative frequency",
+     "histogram",
+     "interquartile range",
+     "standard deviation"
+    ]
+   },
+   "s1_perms_combs": {
+    "title": "S1 5.2 Permutations and combinations",
+    "keywords": [
+     "permutation",
+     "combination",
+     "arrangements",
+     "^nC_r",
+     "\\binom",
+     "^nP_r"
+    ]
+   },
+   "s1_probability": {
+    "title": "S1 5.3 Probability",
+    "keywords": [
+     "conditional probability",
+     "independent events",
+     "mutually exclusive",
+     "tree diagram"
+    ]
+   },
+   "s1_discrete_rv": {
+    "title": "S1 5.4 Discrete random variables (binomial, geometric)",
+    "requires": [
+     "s1_probability"
+    ],
+    "keywords": [
+     "random variable",
+     "probability distribution",
+     "binomial distribution",
+     "geometric distribution",
+     "B(",
+     "\\mathrm{Geo}",
+     "E(X)",
+     "Var(X)"
+    ]
+   },
+   "s1_normal": {
+    "title": "S1 5.5 The normal distribution",
+    "requires": [
+     "s1_probability",
+     "s1_discrete_rv"
+    ],
+    "keywords": [
+     "normal distribution",
+     "N(",
+     "standardise",
+     "standardize",
+     "continuity correction",
+     "\\Phi"
+    ]
+   },
+   "s2_poisson": {
+    "title": "S2 6.1 The Poisson distribution",
+    "requires": [
+     "s1_probability",
+     "s1_discrete_rv",
+     "s1_normal"
+    ],
+    "keywords": [
+     "poisson",
+     "\\mathrm{Po}",
+     "Po("
+    ]
+   },
+   "s2_linear_combinations": {
+    "title": "S2 6.2 Linear combinations of random variables",
+    "requires": [
+     "s1_discrete_rv",
+     "s1_normal",
+     "s2_poisson"
+    ],
+    "keywords": [
+     "linear combination",
+     "E(aX",
+     "Var(aX"
+    ]
+   },
+   "s2_continuous_rv": {
+    "title": "S2 6.3 Continuous random variables",
+    "requires": [
+     "s1_discrete_rv"
+    ],
+    "keywords": [
+     "probability density function",
+     "pdf",
+     "continuous random variable"
+    ]
+   },
+   "s2_sampling_estimation": {
+    "title": "S2 6.4 Sampling and estimation",
+    "requires": [
+     "s1_normal",
+     "s1_data"
+    ],
+    "keywords": [
+     "unbiased estimate",
+     "confidence interval",
+     "sample mean",
+     "central limit theorem",
+     "random sample"
+    ]
+   },
+   "s2_hypothesis_tests": {
+    "title": "S2 6.5 Hypothesis tests",
+    "requires": [
+     "s1_discrete_rv",
+     "s1_normal",
+     "s2_poisson",
+     "s2_sampling_estimation"
+    ],
+    "keywords": [
+     "null hypothesis",
+     "alternative hypothesis",
+     "significance level",
+     "critical region",
+     "type i error",
+     "type ii error",
+     "H_0",
+     "H_1"
+    ]
+   }
+  }
+ },
+ "ib_aa": {
+  "name": "IB Mathematics Analysis and Approaches (SL/HL)",
+  "board": "IB",
+  "syllabus_version": "first assessment 2021",
+  "chapters": {
+   "number_algebra": {
+    "title": "1 Number and algebra (SL): sequences and series, exponents, logs, binomial theorem, simple proof",
+    "level": "SL",
+    "keywords": [
+     "arithmetic sequence",
+     "geometric sequence",
+     "sigma notation",
+     "binomial theorem",
+     "binomial expansion",
+     "\\binom",
+     "compound interest",
+     "logarithm",
+     "\\log",
+     "\\ln"
+    ]
+   },
+   "functions": {
+    "title": "2 Functions (SL): composite, inverse, quadratics, rational, exponential and log functions, transformations",
+    "requires": [
+     "number_algebra"
+    ],
+    "level": "SL",
+    "keywords": [
+     "composite function",
+     "inverse function",
+     "f^{-1}",
+     "discriminant",
+     "vertical asymptote",
+     "horizontal asymptote",
+     "reciprocal function"
+    ]
+   },
+   "geometry_trig": {
+    "title": "3 Geometry and trigonometry (SL): 3D solids, sine and cosine rule, radians, unit circle, trig identities and equations",
+    "level": "SL",
+    "keywords": [
+     "sine rule",
+     "cosine rule",
+     "radian",
+     "unit circle",
+     "\\sin",
+     "\\cos",
+     "\\tan",
+     "arc length",
+     "sector area",
+     "double angle"
+    ]
+   },
+   "stats_prob": {
+    "title": "4 Statistics and probability (SL): data, regression, probability, discrete distributions, binomial and normal",
+    "requires": [
+     "number_algebra"
+    ],
+    "level": "SL",
+    "keywords": [
+     "standard deviation",
+     "interquartile range",
+     "regression line",
+     "correlation coefficient",
+     "conditional probability",
+     "binomial distribution",
+     "normal distribution",
+     "B(n",
+     "N(\\mu",
+     "random variable",
+     "expected value"
+    ]
+   },
+   "calculus": {
+    "title": "5 Calculus (SL): limits, differentiation, integration, kinematics",
+    "requires": [
+     "number_algebra",
+     "functions",
+     "geometry_trig"
+    ],
+    "level": "SL",
+    "keywords": [
+     "derivative",
+     "differentiate",
+     "\\frac{d",
+     "\\frac{\\mathrm{d}",
+     "\\int",
+     "integral",
+     "integrate",
+     "stationary point",
+     "point of inflexion",
+     "point of inflection",
+     "tangent line",
+     "normal line",
+     "chain rule",
+     "product rule",
+     "quotient rule",
+     "velocity",
+     "acceleration",
+     "displacement"
+    ]
+   },
+   "hl_number_algebra": {
+    "title": "AHL 1: counting principles, partial fractions, complex numbers, proof by induction/contradiction, linear systems",
+    "requires": [
+     "number_algebra",
+     "functions",
+     "geometry_trig",
+     "stats_prob",
+     "calculus"
+    ],
+    "level": "HL",
+    "keywords": [
+     "permutation",
+     "combination",
+     "partial fraction",
+     "complex number",
+     "argand",
+     "\\mathrm{i}",
+     "modulus-argument",
+     "euler form",
+     "de moivre",
+     "proof by induction",
+     "mathematical induction",
+     "proof by contradiction",
+     "counterexample",
+     "system of linear equations"
+    ]
+   },
+   "hl_functions": {
+    "title": "AHL 2: polynomial factor and remainder theorems, sums and products of roots, rational functions, odd/even, self-inverse",
+    "requires": [
+     "number_algebra",
+     "functions",
+     "geometry_trig",
+     "stats_prob",
+     "calculus"
+    ],
+    "level": "HL",
+    "keywords": [
+     "factor theorem",
+     "remainder theorem",
+     "sum of the roots",
+     "product of the roots",
+     "odd function",
+     "even function",
+     "self-inverse",
+     "oblique asymptote",
+     "|f(x)|",
+     "f(|x|)"
+    ]
+   },
+   "hl_geometry_trig": {
+    "title": "AHL 3: reciprocal and inverse trig functions, compound angles, vectors, lines and planes",
+    "requires": [
+     "number_algebra",
+     "functions",
+     "geometry_trig",
+     "stats_prob",
+     "calculus"
+    ],
+    "level": "HL",
+    "keywords": [
+     "\\sec",
+     "\\csc",
+     "\\cosec",
+     "\\cot",
+     "\\arcsin",
+     "\\arccos",
+     "\\arctan",
+     "compound angle",
+     "vector",
+     "scalar product",
+     "dot product",
+     "vector product",
+     "cross product",
+     "vector equation of a line",
+     "equation of a plane"
+    ]
+   },
+   "hl_stats_prob": {
+    "title": "AHL 4: Bayes' theorem, continuous random variables, variance of discrete/continuous distributions",
+    "requires": [
+     "number_algebra",
+     "functions",
+     "geometry_trig",
+     "stats_prob",
+     "calculus",
+     "hl_number_algebra"
+    ],
+    "level": "HL",
+    "keywords": [
+     "bayes",
+     "probability density function",
+     "continuous random variable",
+     "\\mathrm{Var}",
+     "var(x)"
+    ]
+   },
+   "hl_calculus": {
+    "title": "AHL 5: continuity and differentiability, L'Hopital, implicit differentiation, related rates, integration by parts/substitution, volumes of revolution, differential equations, Maclaurin series",
+    "requires": [
+     "number_algebra",
+     "functions",
+     "geometry_trig",
+     "stats_prob",
+     "calculus",
+     "hl_number_algebra",
+     "hl_functions",
+     "hl_geometry_trig"
+    ],
+    "level": "HL",
+    "keywords": [
+     "l'hopital",
+     "l'h\\^opital",
+     "l’hôpital",
+     "implicit differentiation",
+     "related rates",
+     "integration by parts",
+     "integration by substitution",
+     "volume of revolution",
+     "differential equation",
+     "euler's method",
+     "euler’s method",
+     "slope field",
+     "integrating factor",
+     "maclaurin",
+     "homogeneous differential equation"
+    ]
+   }
+  }
+ },
+ "ib_ai": {
+  "name": "IB Mathematics Applications and Interpretation (SL/HL)",
+  "board": "IB",
+  "syllabus_version": "first assessment 2021",
+  "chapters": {
+   "number_algebra": {
+    "title": "1 Number and algebra (SL): standard form, sequences, financial maths, logs, approximation and error",
+    "level": "SL",
+    "keywords": [
+     "standard form",
+     "arithmetic sequence",
+     "geometric sequence",
+     "compound interest",
+     "annuity",
+     "amortization",
+     "amortisation",
+     "percentage error",
+     "upper bound",
+     "lower bound",
+     "logarithm"
+    ]
+   },
+   "functions": {
+    "title": "2 Functions (SL): linear, quadratic, exponential, cubic, sinusoidal models; modelling",
+    "requires": [
+     "number_algebra"
+    ],
+    "level": "SL",
+    "keywords": [
+     "inverse function",
+     "f^{-1}",
+     "exponential model",
+     "sinusoidal model",
+     "direct variation",
+     "inverse variation"
+    ]
+   },
+   "geometry_trig": {
+    "title": "3 Geometry and trigonometry (SL): 3D solids, trig, sine/cosine rule, bearings, Voronoi diagrams",
+    "level": "SL",
+    "keywords": [
+     "sine rule",
+     "cosine rule",
+     "bearing",
+     "angle of elevation",
+     "angle of depression",
+     "voronoi",
+     "perpendicular bisector",
+     "\\sin",
+     "\\cos",
+     "\\tan"
+    ]
+   },
+   "stats_prob": {
+    "title": "4 Statistics and probability (SL): data, regression, Spearman, probability, binomial and normal, chi-squared, t-test",
+    "requires": [
+     "number_algebra"
+    ],
+    "level": "SL",
+    "keywords": [
+     "standard deviation",
+     "interquartile range",
+     "regression line",
+     "pearson",
+     "spearman",
+     "correlation coefficient",
+     "conditional probability",
+     "binomial distribution",
+     "normal distribution",
+     "chi-squared",
+     "\\chi^2",
+     "t-test",
+     "null hypothesis",
+     "p-value",
+     "random variable",
+     "expected value"
+    ]
+   },
+   "calculus": {
+    "title": "5 Calculus (SL): gradient, differentiation of polynomials, tangents, optimisation, integration of polynomials, trapezium rule",
+    "requires": [
+     "number_algebra",
+     "functions",
+     "geometry_trig"
+    ],
+    "level": "SL",
+    "keywords": [
+     "derivative",
+     "differentiate",
+     "\\frac{d",
+     "\\frac{\\mathrm{d}",
+     "\\int",
+     "integral",
+     "stationary point",
+     "optimisation",
+     "optimization",
+     "trapezoidal rule",
+     "trapezium rule",
+     "tangent line"
+    ]
+   },
+   "hl_number_algebra": {
+    "title": "AHL 1: laws of logs, complex numbers, matrices, eigenvalues",
+    "requires": [
+     "number_algebra",
+     "functions",
+     "geometry_trig",
+     "stats_prob",
+     "calculus"
+    ],
+    "level": "HL",
+    "keywords": [
+     "complex number",
+     "argand",
+     "euler form",
+     "matrix",
+     "matrices",
+     "determinant",
+     "inverse matrix",
+     "eigenvalue",
+     "eigenvector",
+     "\\begin{pmatrix}"
+    ]
+   },
+   "hl_functions": {
+    "title": "AHL 2: composite transformations, logistic and further models, log linearisation",
+    "requires": [
+     "number_algebra",
+     "functions",
+     "geometry_trig",
+     "stats_prob",
+     "calculus"
+    ],
+    "level": "HL",
+    "keywords": [
+     "logistic",
+     "linearis",
+     "linearize",
+     "\\ln y",
+     "log-log",
+     "semi-log"
+    ]
+   },
+   "hl_geometry_trig": {
+    "title": "AHL 3: radians, vectors, graph theory, transformation matrices",
+    "requires": [
+     "number_algebra",
+     "functions",
+     "geometry_trig",
+     "stats_prob",
+     "calculus"
+    ],
+    "level": "HL",
+    "keywords": [
+     "radian",
+     "vector",
+     "scalar product",
+     "vector product",
+     "graph theory",
+     "adjacency matrix",
+     "spanning tree",
+     "kruskal",
+     "prim's",
+     "chinese postman",
+     "travelling salesman",
+     "eulerian",
+     "hamiltonian",
+     "transformation matrix"
+    ]
+   },
+   "hl_stats_prob": {
+    "title": "AHL 4: linear combinations of random variables, Poisson, Markov chains, hypothesis tests, confidence intervals",
+    "requires": [
+     "number_algebra",
+     "functions",
+     "geometry_trig",
+     "stats_prob",
+     "calculus",
+     "hl_number_algebra"
+    ],
+    "level": "HL",
+    "keywords": [
+     "poisson",
+     "markov",
+     "transition matrix",
+     "steady state",
+     "confidence interval",
+     "unbiased estimate",
+     "linear combination of",
+     "non-linear regression",
+     "coefficient of determination"
+    ]
+   },
+   "hl_calculus": {
+    "title": "AHL 5: further differentiation, integration techniques, volumes, kinematics, differential equations, slope fields, coupled systems",
+    "requires": [
+     "number_algebra",
+     "functions",
+     "geometry_trig",
+     "stats_prob",
+     "calculus",
+     "hl_number_algebra",
+     "hl_functions",
+     "hl_geometry_trig"
+    ],
+    "level": "HL",
+    "keywords": [
+     "chain rule",
+     "product rule",
+     "quotient rule",
+     "related rates",
+     "volume of revolution",
+     "differential equation",
+     "slope field",
+     "euler's method",
+     "euler’s method",
+     "phase portrait",
+     "coupled",
+     "second derivative test"
+    ]
+   }
+  }
+ },
+ "igcse_0580": {
+  "name": "Cambridge IGCSE Mathematics 0580 Extended",
+  "board": "Cambridge International",
+  "syllabus_version": "2025-2027",
+  "chapters": {
+   "number": {
+    "title": "Number (types, indices, standard form, bounds, percentages)",
+    "keywords": [
+     "standard form",
+     "upper bound",
+     "lower bound",
+     "compound interest"
+    ]
+   },
+   "algebra_basic": {
+    "title": "Algebra - expressions, linear equations, factorising",
+    "keywords": []
+   },
+   "quadratics": {
+    "title": "Algebra - quadratics",
+    "requires": [
+     "algebra_basic"
+    ],
+    "keywords": [
+     "quadratic",
+     "completing the square",
+     "discriminant",
+     "quadratic formula"
+    ]
+   },
+   "inequalities": {
+    "title": "Algebra - inequalities and linear programming",
+    "requires": [
+     "algebra_basic"
+    ],
+    "keywords": [
+     "inequality",
+     "inequalities",
+     "\\leqslant",
+     "\\geqslant",
+     "linear programming"
+    ]
+   },
+   "sequences": {
+    "title": "Sequences",
+    "keywords": [
+     "nth term",
+     "sequence",
+     "term-to-term"
+    ]
+   },
+   "functions": {
+    "title": "Functions (notation, composite, inverse)",
+    "requires": [
+     "algebra_basic"
+    ],
+    "keywords": [
+     "inverse function",
+     "composite function",
+     "f^{-1}",
+     "fg(x)",
+     "gf(x)"
+    ]
+   },
+   "graphs": {
+    "title": "Graphs of functions, gradients",
+    "requires": [
+     "algebra_basic",
+     "quadratics",
+     "coordinate_geometry",
+     "functions"
+    ],
+    "keywords": [
+     "asymptote",
+     "turning point",
+     "tangent to the curve"
+    ]
+   },
+   "differentiation": {
+    "title": "Differentiation",
+    "requires": [
+     "algebra_basic",
+     "graphs",
+     "quadratics",
+     "coordinate_geometry",
+     "functions"
+    ],
+    "keywords": [
+     "differentiate",
+     "derivative",
+     "\\frac{dy}{dx}",
+     "dy/dx",
+     "stationary point",
+     "gradient function"
+    ]
+   },
+   "coordinate_geometry": {
+    "title": "Coordinate geometry",
+    "keywords": [
+     "midpoint",
+     "perpendicular bisector",
+     "gradient of the line"
+    ]
+   },
+   "geometry": {
+    "title": "Geometry (angles, circle theorems, similarity, congruence)",
+    "keywords": [
+     "circle theorem",
+     "cyclic quadrilateral",
+     "alternate segment",
+     "congruent",
+     "similar triangles"
+    ]
+   },
+   "mensuration": {
+    "title": "Mensuration (area, volume, arcs, sectors)",
+    "requires": [
+     "geometry"
+    ],
+    "keywords": [
+     "sector",
+     "arc length",
+     "frustum",
+     "hemisphere",
+     "surface area",
+     "volume"
+    ]
+   },
+   "trigonometry": {
+    "title": "Trigonometry (right-angled, sine/cosine rule, 3D, graphs)",
+    "requires": [
+     "geometry",
+     "mensuration"
+    ],
+    "keywords": [
+     "sine rule",
+     "cosine rule",
+     "bearing",
+     "\\sin",
+     "\\cos",
+     "\\tan",
+     "angle of elevation"
+    ]
+   },
+   "transformations_vectors": {
+    "title": "Transformations and vectors",
+    "keywords": [
+     "vector",
+     "reflection",
+     "rotation",
+     "enlargement",
+     "translation",
+     "column vector",
+     "magnitude"
+    ]
+   },
+   "probability": {
+    "title": "Probability",
+    "requires": [
+     "sets"
+    ],
+    "keywords": [
+     "probability",
+     "tree diagram",
+     "independent events",
+     "mutually exclusive"
+    ]
+   },
+   "statistics": {
+    "title": "Statistics",
+    "keywords": [
+     "the mean",
+     "median",
+     "interquartile range",
+     "histogram",
+     "cumulative frequency",
+     "frequency density"
+    ]
+   },
+   "sets": {
+    "title": "Sets and Venn diagrams",
+    "keywords": [
+     "venn diagram",
+     "\\cap",
+     "\\cup",
+     "universal set"
+    ]
+   }
+  }
+ }
+}
