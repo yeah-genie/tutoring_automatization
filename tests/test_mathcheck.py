@@ -29,7 +29,7 @@ def _run(spec: dict):
 
 
 def _messages(rep) -> str:
-    return "\n".join(str(i) for i in rep.issues)
+    return "\n".join(f"{i.code} {i.where} {i.message()}" for i in rep.issues)
 
 
 def test_sample_passes():
@@ -62,14 +62,14 @@ def test_out_of_scope_is_caught():
     spec = load_spec(SAMPLE)
     spec["questions"][1]["solution"] += " Alternatively, differentiate: $\\frac{dy}{dx} = 2x - 8$."
     rep = _run(spec)
-    assert not rep.ok and "범위 밖" in _messages(rep)
+    assert not rep.ok and "scope.out_of_scope" in _messages(rep)
 
 
 def test_latex_error_is_caught():
     spec = load_spec(SAMPLE)
     spec["questions"][0]["text"] = "Solve $\\frac{x}{2 = 3$."  # 괄호 깨짐
     rep = _run(spec)
-    assert not rep.ok and "컴파일" in _messages(rep)
+    assert not rep.ok and "latex.compile_error" in _messages(rep)
 
 
 def test_overflow_is_caught():
@@ -77,7 +77,7 @@ def test_overflow_is_caught():
     long_expr = " + ".join(f"{i}x^{{{i}}}" for i in range(1, 40))
     spec["questions"][0]["text"] = f"Simplify \\[ {long_expr} \\] completely."  # 줄바꿈 안 되는 긴 수식
     rep = _run(spec)
-    assert not rep.ok and ("여백" in _messages(rep) or "잘려" in _messages(rep))
+    assert not rep.ok and ("latex.overfull" in _messages(rep) or "latex.clipped" in _messages(rep))
 
 
 def test_duplicate_question_is_caught():
@@ -87,14 +87,50 @@ def test_duplicate_question_is_caught():
     spec["questions"].append(dup)
     spec["total_marks"] = spec["total_marks"] + dup["marks"]
     rep = _run(spec)
-    assert not rep.ok and "같은 문제" in _messages(rep)
+    assert not rep.ok and "dup.within" in _messages(rep)
 
 
 def test_total_marks_mismatch_is_caught():
     spec = load_spec(SAMPLE)
     spec["total_marks"] = 12
     rep = _run(spec)
-    assert not rep.ok and "총점" in _messages(rep)
+    assert not rep.ok and "math.total_mismatch" in _messages(rep)
+
+
+def test_blocked_code_is_rejected():
+    from mathcheck.sandbox import run_check
+    for bad in ["import os\nresult = 1", "result = open('/etc/passwd').read()",
+                "result = ().__class__", "result = sympify('__import__(\"os\")')"]:
+        val, err = run_check(bad)
+        assert val is None and err[0] == "math.blocked", bad
+
+
+def test_unsafe_expected_is_rejected():
+    spec = load_spec(SAMPLE)
+    spec["questions"][3]["expected"] = "__import__('os').getcwd()"
+    rep = _run(spec)
+    assert "math.bad_expected" in _messages(rep)
+
+
+def test_prerequisite_chapters_allowed():
+    from mathcheck.scope_check import check_scope
+    spec = {"curriculum": "ap_calculus", "chapters": ["u5_analytical"],
+            "questions": [{"id": 1, "text": "Use the derivative and the chain rule to find the critical point.",
+                           "solution": "", "final_answer": ""}]}
+    assert check_scope(spec).ok
+    spec["questions"][0]["text"] += " Then evaluate the integral."
+    assert not check_scope(spec).ok
+
+
+def test_bundled_curricula_load():
+    from mathcheck.scope_check import list_curricula, load_curriculum
+    names = list_curricula()
+    for n in ["igcse_0580", "ib_aa", "ib_ai", "ap_calculus", "ap_precalculus", "ap_statistics", "caie_9709"]:
+        cur = load_curriculum(n)
+        for ch, info in cur["chapters"].items():
+            for r in info.get("requires", []) or []:
+                assert r in cur["chapters"], (n, ch, r)
+        assert n in names
 
 
 if __name__ == "__main__":

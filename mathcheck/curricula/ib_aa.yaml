@@ -1,0 +1,68 @@
+# IB Diploma Mathematics: Analysis and Approaches (SL and HL).
+# Based on the IB guide for first assessment 2021. Chapters prefixed hl_ are HL-only (AHL) content:
+# for an SL quiz, simply do not select them and any HL concept will be flagged.
+# keywords: concepts first introduced in that chapter. Unofficial, community-maintained.
+name: IB Mathematics Analysis and Approaches (SL/HL)
+board: IB
+syllabus_version: "first assessment 2021"
+chapters:
+  number_algebra:
+    title: "1 Number and algebra (SL): sequences and series, exponents, logs, binomial theorem, simple proof"
+    level: SL
+    keywords: [arithmetic sequence, geometric sequence, sigma notation, binomial theorem, binomial expansion,
+               "\\binom", compound interest, logarithm, "\\log", "\\ln"]
+  functions:
+    title: "2 Functions (SL): composite, inverse, quadratics, rational, exponential and log functions, transformations"
+    requires: [number_algebra]
+    level: SL
+    keywords: [composite function, inverse function, "f^{-1}", discriminant, vertical asymptote, horizontal asymptote,
+               reciprocal function]
+  geometry_trig:
+    title: "3 Geometry and trigonometry (SL): 3D solids, sine and cosine rule, radians, unit circle, trig identities and equations"
+    level: SL
+    keywords: [sine rule, cosine rule, radian, unit circle, "\\sin", "\\cos", "\\tan", arc length, sector area,
+               double angle]
+  stats_prob:
+    title: "4 Statistics and probability (SL): data, regression, probability, discrete distributions, binomial and normal"
+    requires: [number_algebra]
+    level: SL
+    keywords: [standard deviation, interquartile range, regression line, correlation coefficient, conditional probability,
+               binomial distribution, normal distribution, "B(n", "N(\\mu", random variable, expected value]
+  calculus:
+    title: "5 Calculus (SL): limits, differentiation, integration, kinematics"
+    requires: [number_algebra, functions, geometry_trig]
+    level: SL
+    keywords: [derivative, differentiate, "\\frac{d", "\\frac{\\mathrm{d}", "\\int", integral, integrate, stationary point,
+               point of inflexion, point of inflection, tangent line, normal line, chain rule, product rule, quotient rule,
+               velocity, acceleration, displacement]
+  hl_number_algebra:
+    title: "AHL 1: counting principles, partial fractions, complex numbers, proof by induction/contradiction, linear systems"
+    requires: [number_algebra, functions, geometry_trig, stats_prob, calculus]
+    level: HL
+    keywords: [permutation, combination, partial fraction, complex number, argand, "\\mathrm{i}", modulus-argument,
+               euler form, de moivre, proof by induction, mathematical induction, proof by contradiction,
+               counterexample, system of linear equations]
+  hl_functions:
+    title: "AHL 2: polynomial factor and remainder theorems, sums and products of roots, rational functions, odd/even, self-inverse"
+    requires: [number_algebra, functions, geometry_trig, stats_prob, calculus]
+    level: HL
+    keywords: [factor theorem, remainder theorem, sum of the roots, product of the roots, odd function, even function,
+               self-inverse, oblique asymptote, "|f(x)|", "f(|x|)"]
+  hl_geometry_trig:
+    title: "AHL 3: reciprocal and inverse trig functions, compound angles, vectors, lines and planes"
+    requires: [number_algebra, functions, geometry_trig, stats_prob, calculus]
+    level: HL
+    keywords: ["\\sec", "\\csc", "\\cosec", "\\cot", "\\arcsin", "\\arccos", "\\arctan", compound angle, vector,
+               scalar product, dot product, vector product, cross product, vector equation of a line, equation of a plane]
+  hl_stats_prob:
+    title: "AHL 4: Bayes' theorem, continuous random variables, variance of discrete/continuous distributions"
+    requires: [number_algebra, functions, geometry_trig, stats_prob, calculus, hl_number_algebra]
+    level: HL
+    keywords: ["bayes", probability density function, continuous random variable, "\\mathrm{Var}", "var(x)"]
+  hl_calculus:
+    title: "AHL 5: continuity and differentiability, L'Hopital, implicit differentiation, related rates, integration by parts/substitution, volumes of revolution, differential equations, Maclaurin series"
+    requires: [number_algebra, functions, geometry_trig, stats_prob, calculus, hl_number_algebra, hl_functions, hl_geometry_trig]
+    level: HL
+    keywords: ["l'hopital", "l'h\\^opital", "l’hôpital", implicit differentiation, related rates, integration by parts,
+               integration by substitution, volume of revolution, differential equation, euler's method, "euler’s method",
+               slope field, integrating factor, maclaurin, homogeneous differential equation]

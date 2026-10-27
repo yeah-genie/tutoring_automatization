@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "monthly"))
+sys.path.insert(0, str(ROOT / "workflows" / "tutoring" / "monthly"))
 
 from aggregate import FIELDS, read_rows, summarize  # noqa: E402
 

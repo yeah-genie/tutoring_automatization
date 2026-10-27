@@ -1,73 +1,34 @@
-"""수학 정답 검사.
+"""Answer verification.
 
-문항마다 세 가지가 서로 맞는지 본다.
-  1. check: 문제 조건만 가지고 답을 계산하는 파이썬(sympy) 코드. 마지막에 result 변수에 답을 넣는다.
-  2. expected: 출제자가 정한 정답 (sympy가 읽을 수 있는 식, 숫자, 또는 리스트)
-  3. final_answer: 해설지에 실제로 인쇄되는 최종 답 문자열
+For each question three things must agree:
+  1. check:        code that computes the answer from the question's conditions only and sets `result`
+  2. expected:     the intended answer (number, sympy-readable expression, or a list)
+  3. final_answer: the answer string actually printed on the solutions sheet
 
-check 결과 == expected 이고, final_answer 안에 expected가 드러나야 통과.
-check 코드는 별도 프로세스에서 시간 제한을 두고 실행한다.
+Pass = check result == expected, and the printed final answer shows the expected value.
 """
 from __future__ import annotations
 
 import json
 import re
-import subprocess
-import sys
-import textwrap
+from math import floor, log10
 
 import sympy as sp
 
+from .sandbox import run_check, safe_parse_expr
 from .spec import Report
-
-RUNNER = r'''
-import json, sys
-from sympy import *
-x, y, z, t, n, k, a, b, c = symbols("x y z t n k a b c")
-ns = {}
-exec(compile(sys.stdin.read(), "<check>", "exec"), globals(), ns)
-if "result" not in ns:
-    print(json.dumps({"error": "check 코드에 result 변수가 없음"}))
-else:
-    r = ns["result"]
-    if isinstance(r, (set, frozenset, tuple)):
-        r = list(r)
-    print(json.dumps({"result": srepr(r) if not isinstance(r, list) else [srepr(i) for i in r]}))
-'''
-
-
-def run_check(code: str, timeout: int = 20) -> tuple[object | None, str | None]:
-    try:
-        p = subprocess.run(
-            [sys.executable, "-I", "-c", RUNNER],
-            input=textwrap.dedent(code),
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
-    except subprocess.TimeoutExpired:
-        return None, f"check 코드가 {timeout}초 안에 끝나지 않음"
-    if p.returncode != 0:
-        last = (p.stderr.strip().splitlines() or ["알 수 없는 오류"])[-1]
-        return None, f"check 코드 실행 오류: {last}"
-    try:
-        out = json.loads(p.stdout.strip().splitlines()[-1])
-    except Exception:
-        return None, "check 코드 출력 형식 오류"
-    if "error" in out:
-        return None, out["error"]
-    r = out["result"]
-    if isinstance(r, list):
-        return [sp.sympify(eval(s, vars(sp))) for s in r], None  # noqa: S307 (srepr round-trip)
-    return sp.sympify(eval(r, vars(sp))), None  # noqa: S307
 
 
 def _to_sympy(v):
     if isinstance(v, (list, tuple, set)):
         return [_to_sympy(i) for i in v]
-    if isinstance(v, (int, float)):
-        return sp.nsimplify(v) if isinstance(v, int) else sp.Float(v)
-    return sp.sympify(str(v).replace("^", "**"))
+    if isinstance(v, bool):
+        return sp.true if v else sp.false
+    if isinstance(v, int):
+        return sp.Integer(v)
+    if isinstance(v, float):
+        return sp.Float(v)
+    return safe_parse_expr(v)
 
 
 def _equal(a, b, tol: float | None) -> bool:
@@ -82,8 +43,7 @@ def _equal(a, b, tol: float | None) -> bool:
             bs.pop(hit)
         return True
     try:
-        diff = sp.simplify(sp.nsimplify(a) - sp.nsimplify(b)) if tol is None else None
-        if diff == 0:
+        if tol is None and sp.simplify(sp.nsimplify(a) - sp.nsimplify(b)) == 0:
             return True
         fa, fb = complex(sp.N(a)), complex(sp.N(b))
         limit = tol if tol is not None else 1e-9 * max(1.0, abs(fb))
@@ -95,45 +55,44 @@ def _equal(a, b, tol: float | None) -> bool:
 def _round_sf(v: float, sf: int) -> float:
     if v == 0:
         return 0.0
-    from math import floor, log10
-
     return round(v, sf - 1 - floor(log10(abs(v))))
 
 
 def _numbers_in(text: str) -> list[float]:
     cleaned = text.replace("{,}", "").replace(",", "")
-    # '-'는 앞에 글자·숫자·닫는 괄호가 없을 때만 부호로 본다 (x-4의 4는 양수)
+    # '-' is a sign only when not preceded by a letter, digit or closing bracket (the 4 in x-4 is positive)
     return [float(m) for m in re.findall(r"(?:(?<![\w)\]}])-)?\d+(?:\.\d+)?", cleaned)]
 
 
-def verify_question(q: dict) -> Report:
+def verify_question(q: dict, timeout: int = 20) -> Report:
     rep = Report()
     qid = f"Q{q.get('id', '?')}"
     tol = q.get("tolerance")
     sf = q.get("sf")
 
-    computed, err = run_check(q.get("check", ""))
+    computed, err = run_check(q.get("check", ""), timeout=timeout)
     if err:
-        rep.add("error", qid, err)
+        rep.add("error", qid, err[0], **err[1])
         return rep
     try:
         expected = _to_sympy(q.get("expected"))
     except Exception as e:  # noqa: BLE001
-        rep.add("error", qid, f"expected를 식으로 읽을 수 없음: {e}")
+        rep.add("error", qid, "math.bad_expected", detail=e)
         return rep
 
     if sf and not isinstance(computed, list):
         computed_cmp = sp.Float(_round_sf(float(sp.N(computed)), int(sf)))
+    elif sf:
+        computed_cmp = [sp.Float(_round_sf(float(sp.N(c)), int(sf))) for c in computed]
     else:
         computed_cmp = computed
     if not _equal(computed_cmp, expected, tol):
-        rep.add("error", qid, f"계산 결과 {computed} ≠ 정답 {expected}. 정답이나 문제 조건이 틀렸을 수 있음")
+        rep.add("error", qid, "math.mismatch", computed=computed, expected=expected)
 
-    # 해설지에 인쇄될 최종 답이 정답과 같은 숫자를 담고 있는지
+    # the printed final answer must show the expected value(s)
     final = str(q.get("final_answer", ""))
-    exp_list = expected if isinstance(expected, list) else [expected]
     nums = _numbers_in(final)
-    for e in exp_list:
+    for e in expected if isinstance(expected, list) else [expected]:
         try:
             ev = float(sp.N(e))
         except Exception:
@@ -142,33 +101,37 @@ def verify_question(q: dict) -> Report:
             target = _round_sf(ev, int(sf)) if sf else ev
             if not any(abs(v - target) <= (tol or 1e-6 * max(1, abs(target))) for v in nums):
                 if sp.nsimplify(e).is_rational or sf or tol:
-                    rep.add("error", qid, f"해설지 최종 답 '{final}'에 정답 {target}이(가) 보이지 않음")
-    if not rep.issues:
-        rep.notes.append(f"{qid} 정답 확인: {expected}")
+                    rep.add("error", qid, "math.printed_missing", final=final, target=target)
+    if rep.ok:
+        rep.info(qid, "math.verified", expected=expected)
     return rep
 
 
-def verify_spec_math(spec: dict) -> Report:
+def verify_spec_math(spec: dict, timeout: int = 20) -> Report:
     rep = Report()
     for q in spec.get("questions", []):
-        rep.extend(verify_question(q))
+        rep.extend(verify_question(q, timeout))
     total = sum(int(q.get("marks", 0)) for q in spec.get("questions", []))
     declared = spec.get("total_marks")
     if declared is not None and int(declared) != total:
-        rep.add("error", "배점", f"표지에 적힌 총점 {declared} ≠ 문항 배점 합 {total}")
+        rep.add("error", "marks", "math.total_mismatch", declared=declared, total=total)
     return rep
 
 
 def check_answer(problem_code: str, claimed: str, tolerance: float | None = None) -> Report:
-    """MCP에서 단독으로 쓰는 간단 검사: 코드로 계산한 값과 주장한 답 비교."""
+    """Standalone check: recompute with code and compare with a claimed answer."""
     rep = Report()
     computed, err = run_check(problem_code)
     if err:
-        rep.add("error", "계산", err)
+        rep.add("error", "answer", err[0], **err[1])
         return rep
-    claimed_v = _to_sympy(json.loads(claimed) if claimed.strip().startswith("[") else claimed)
+    try:
+        claimed_v = _to_sympy(json.loads(claimed) if claimed.strip().startswith("[") else claimed)
+    except Exception as e:  # noqa: BLE001
+        rep.add("error", "answer", "math.bad_expected", detail=e)
+        return rep
     if _equal(computed, claimed_v, tolerance):
-        rep.notes.append(f"일치: {computed}")
+        rep.info("answer", "math.claim_ok", computed=computed)
     else:
-        rep.add("error", "계산", f"계산 결과 {computed} ≠ 주장한 답 {claimed_v}")
+        rep.add("error", "answer", "math.claim_mismatch", computed=computed, claimed=claimed_v)
     return rep

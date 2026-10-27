@@ -2,7 +2,7 @@
 
 채점 결과에서 틀린 유형으로 다음 수업 복습 퀴즈를 만들 때 이 순서를 따른다.
 
-1. **범위 정하기**: 학생이 틀린 문제의 단원만 고른다. `python -c "from mathcheck.scope_check import load_curriculum as l; print(list(l('igcse_0580')['chapters']))"`로 단원 코드를 확인한다. 국내 교재(쎈 등) 학생은 `curricula/`에 맞는 파일이 없으면 범위 검사가 건너뛰어지므로, 문제와 해설을 직접 한 번 더 읽는다.
+1. **범위 정하기**: 학생이 틀린 문제의 단원만 고른다. `python -m mathcheck curricula`로 교육과정 목록을, `python -m mathcheck chapters igcse_0580`로 단원 코드를 확인한다(IB는 ib_aa/ib_ai, AP는 ap_calculus 등, A-Level은 caie_9709). 선수 단원은 자동으로 허용된다. 국내 교재(쎈 등) 학생은 맞는 교육과정 파일이 없으면 범위 검사가 건너뛰어지므로, 문제와 해설을 직접 한 번 더 읽는다.
 2. **문항 설계**: 3~5문항, 10~15분 분량. 틀린 문제와 같은 개념, 다른 숫자. 학생이 실제로 한 실수(예: 부호 실수)를 해설의 `trap`에 적는다.
 3. **YAML 작성**: `examples/sample_quiz.yaml` 형식. 문제 본문은 영어(국제 교육과정) 또는 학생이 쓰는 교재 언어.
 4. **check 코드**: 문제에 적힌 숫자와 조건만으로 sympy로 계산하고 `result`에 넣는다. `expected`를 복사하지 않는다. 여러 답이면 리스트.

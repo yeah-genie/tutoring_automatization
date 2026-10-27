@@ -1,0 +1,3 @@
+[console_scripts]
+mathcheck = mathcheck.__main__:main
+mathcheck-mcp = mathcheck.server:main

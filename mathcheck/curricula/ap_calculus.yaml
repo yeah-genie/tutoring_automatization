@@ -1,0 +1,45 @@
+# AP Calculus AB and BC (College Board Course and Exam Description, Units 1-10).
+# Chapters prefixed bc_ are BC-only. For an AB quiz, do not select them.
+# Unofficial, community-maintained.
+name: AP Calculus AB/BC
+board: College Board AP
+cumulative: true   # each unit builds on all earlier units
+chapters:
+  u1_limits:
+    title: "Unit 1 Limits and Continuity"
+    keywords: ["\\lim", limit, continuity, continuous at, intermediate value theorem, squeeze theorem, removable discontinuity]
+  u2_diff_basics:
+    title: "Unit 2 Differentiation: Definition and Fundamental Properties"
+    keywords: [derivative, differentiable, "f'(", "\\frac{d", "\\frac{\\mathrm{d}", product rule, quotient rule, power rule]
+  u3_diff_composite:
+    title: "Unit 3 Differentiation: Composite, Implicit, and Inverse Functions"
+    keywords: [chain rule, implicit differentiation, "\\frac{d^2", second derivative, inverse trigonometric, "\\arcsin", "\\arctan"]
+  u4_contextual:
+    title: "Unit 4 Contextual Applications of Differentiation"
+    keywords: [related rates, linear approximation, local linearity, "l'hospital", "l'hôpital", "l'hopital", velocity, acceleration]
+  u5_analytical:
+    title: "Unit 5 Analytical Applications of Differentiation"
+    keywords: [mean value theorem, extreme value theorem, relative maximum, relative minimum, critical point,
+               concave up, concave down, point of inflection, optimization, candidates test]
+  u6_integration:
+    title: "Unit 6 Integration and Accumulation of Change"
+    keywords: ["\\int", integral, antiderivative, riemann sum, trapezoidal sum, fundamental theorem of calculus,
+               accumulation function, u-substitution]
+  u7_diff_eq:
+    title: "Unit 7 Differential Equations"
+    keywords: [differential equation, slope field, separation of variables, separable, exponential growth]
+  u8_applications:
+    title: "Unit 8 Applications of Integration"
+    keywords: [average value of a function, area between, volume, disc method, disk method, washer method, cross section]
+  bc_techniques:
+    title: "BC-only topics in Units 6-8: integration by parts, partial fractions, improper integrals, Euler's method, logistic models, arc length"
+    keywords: [integration by parts, partial fraction, improper integral, "euler's method", "euler’s method", logistic, arc length]
+  bc_u9_parametric_polar:
+    title: "Unit 9 (BC) Parametric Equations, Polar Coordinates, and Vector-Valued Functions"
+    requires: [u1_limits, u2_diff_basics, u3_diff_composite, u4_contextual, u5_analytical, u6_integration, u7_diff_eq, u8_applications, bc_techniques]
+    keywords: [parametric, polar, "r(\\theta)", "r = ", vector-valued, "\\langle"]
+  bc_u10_series:
+    title: "Unit 10 (BC) Infinite Sequences and Series"
+    requires: [u1_limits, u2_diff_basics, u3_diff_composite, u4_contextual, u5_analytical, u6_integration, u7_diff_eq, u8_applications, bc_techniques]
+    keywords: [converge, diverge, series, ratio test, integral test, comparison test, alternating series, taylor, maclaurin,
+               radius of convergence, interval of convergence, lagrange error, "\\sum_{n"]

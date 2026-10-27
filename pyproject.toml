@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mathcheck-mcp"
+version = "0.2.0"
+description = "Catch wrong answers, typos and print errors in AI-generated maths quizzes before they reach students (IGCSE, IB, AP, A-Level)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "yeah-genie" }]
+keywords = ["math", "education", "quiz", "mcp", "sympy", "latex", "ib", "igcse", "ap", "a-level"]
+dependencies = ["sympy>=1.12", "pyyaml>=6.0", "pillow>=10.0", "mcp>=1.2,<2"]
+
+[project.scripts]
+mathcheck = "mathcheck.__main__:main"
+mathcheck-mcp = "mathcheck.server:main"
+
+[project.urls]
+Homepage = "https://github.com/yeah-genie/tutoring_automatization"
+
+[tool.setuptools]
+packages = ["mathcheck"]
+
+[tool.setuptools.package-data]
+mathcheck = ["curricula/*.yaml"]

@@ -1,0 +1,34 @@
+# AP Statistics (College Board CED, Units 1-9). Unofficial, community-maintained.
+name: AP Statistics
+board: College Board AP
+cumulative: true   # each unit builds on all earlier units
+chapters:
+  u1_one_variable:
+    title: "Unit 1 Exploring One-Variable Data"
+    keywords: [histogram, boxplot, box plot, interquartile range, standard deviation, z-score, outlier, normal model]
+  u2_two_variable:
+    title: "Unit 2 Exploring Two-Variable Data"
+    keywords: [scatterplot, correlation, least-squares regression, residual, "r^2", coefficient of determination, two-way table]
+  u3_collecting_data:
+    title: "Unit 3 Collecting Data"
+    keywords: [simple random sample, stratified, cluster sample, systematic sample, bias, experiment, observational study,
+               blocking, placebo, random assignment]
+  u4_probability:
+    title: "Unit 4 Probability, Random Variables, and Probability Distributions"
+    keywords: [conditional probability, independent events, random variable, expected value, binomial, geometric distribution]
+  u5_sampling_distributions:
+    title: "Unit 5 Sampling Distributions"
+    keywords: [sampling distribution, central limit theorem, standard error, unbiased estimator]
+  u6_proportions:
+    title: "Unit 6 Inference for Categorical Data: Proportions"
+    keywords: [confidence interval, "\\hat{p}", one-proportion z, two-proportion z, null hypothesis, p-value, type i error,
+               type ii error, power]
+  u7_means:
+    title: "Unit 7 Inference for Quantitative Data: Means"
+    keywords: [t-interval, t-test, t distribution, degrees of freedom, paired t]
+  u8_chi_square:
+    title: "Unit 8 Inference for Categorical Data: Chi-Square"
+    keywords: [chi-square, "\\chi^2", goodness of fit, test for independence, test for homogeneity]
+  u9_slopes:
+    title: "Unit 9 Inference for Quantitative Data: Slopes"
+    keywords: [slope of the regression line, t-interval for the slope, test for the slope]

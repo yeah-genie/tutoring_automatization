@@ -21,7 +21,7 @@ LaTeX(MacTeX 또는 TeX Live)이 설치되어 있어야 한다. `pdflatex --vers
 ## 명령줄로 쓰기
 
 ```bash
-python -m mathcheck check examples/sample_quiz.yaml --out build/
+mathcheck check examples/sample_quiz.yaml --out build/
 ```
 통과하면 `build/`에 문제지와 해설지 PDF가 생긴다.
 
@@ -66,5 +66,5 @@ python tests/test_mathcheck.py
 
 ## 한계
 
-- 단원 범위 검사는 키워드 기반이라 놓치는 경우가 있다. `curricula/*.yaml`에 키워드를 계속 추가한다.
+- 단원 범위 검사는 키워드 기반이라 놓치는 경우가 있다. `mathcheck/curricula/*.yaml`에 키워드를 계속 추가한다.
 - `check` 코드도 사람이 아닌 AI가 쓰므로, 문제 해석 자체가 틀리면 둘 다 같이 틀릴 수 있다. 그래서 페이지 이미지를 눈으로 한 번 보는 단계는 남겨 둔다.

@@ -1,67 +1,93 @@
-"""mathcheck MCP 서버.
+"""mathcheck MCP server.
 
-Claude(클로드 코드·데스크톱)가 시험지나 퀴즈를 만든 뒤 이 도구들을 불러 스스로 검사한다.
+After an AI assistant writes a quiz or exam paper, it calls these tools to check its own work
+before anything reaches a student.
 
-연결 (클로드 코드):
-  claude mcp add mathcheck -- python -m mathcheck.server
-  (저장소 폴더에서 실행하거나, PYTHONPATH에 저장소 경로를 넣는다)
+Connect (Claude Code):   claude mcp add mathcheck -- python -m mathcheck.server
 """
 from __future__ import annotations
 
+import tempfile
 from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 
 from .latex_check import check_tex
-from .pipeline import check_all
-from .scope_check import check_scope, load_curriculum
-from .spec import load_spec
+from .pipeline import check_spec
+from .scope_check import check_scope, list_curricula, load_curriculum
+from .spec import Report, load_spec, parse_spec
 from .verify_math import check_answer as _check_answer
 from .verify_math import verify_spec_math
 
 mcp = FastMCP("mathcheck")
 
 
-@mcp.tool()
-def check_quiz(spec_path: str, outdir: str = "build", bank_path: str = "") -> dict:
-    """퀴즈 사양(YAML) 전체 검사: 수학 정답, 단원 범위, 중복, LaTeX 컴파일과 인쇄 상태.
-    ok가 false면 학생에게 내면 안 된다. issues를 하나씩 고치고 다시 호출할 것.
-    통과하면 files에 문제지·해설지 PDF와 페이지 이미지 경로가 있다. 이미지를 열어 눈으로도 확인할 것."""
-    rep, files = check_all(spec_path, outdir, bank_path or None)
-    return {**rep.to_dict(), "files": files}
+def _load(spec_path: str, spec_yaml: str) -> tuple[dict | None, str, Report | None]:
+    try:
+        if spec_yaml.strip():
+            return parse_spec(spec_yaml), "quiz", None
+        return load_spec(spec_path), Path(spec_path).stem, None
+    except Exception as e:  # noqa: BLE001
+        rep = Report()
+        rep.add("error", "spec", "spec.unreadable", detail=e)
+        return None, "", rep
 
 
 @mcp.tool()
-def check_math_only(spec_path: str) -> dict:
-    """퀴즈 사양의 수학 정답만 빠르게 검사한다 (PDF는 만들지 않음)."""
-    return verify_spec_math(load_spec(spec_path)).to_dict()
+def check_quiz(spec_path: str = "", spec_yaml: str = "", outdir: str = "", bank_path: str = "", lang: str = "") -> dict:
+    """Full check of a quiz spec: answers re-computed with sympy, printed answers, total marks,
+    syllabus scope, duplicates, LaTeX compile and page images.
+    Pass either spec_path (a YAML file) or spec_yaml (the YAML text itself).
+    If ok is false the quiz must not be handed out: fix each issue and call again.
+    On success, files lists the question paper and solutions PDFs and page PNGs: look at the PNGs too."""
+    spec, stem, err = _load(spec_path, spec_yaml)
+    if err:
+        return err.to_dict(lang or None)
+    outdir = outdir or tempfile.mkdtemp(prefix="mathcheck_")
+    rep, files = check_spec(spec, outdir, stem, bank_path or None)
+    return {**rep.to_dict(lang or None), "files": files}
 
 
 @mcp.tool()
-def check_answer(problem_code: str, claimed_answer: str, tolerance: float = 0.0) -> dict:
-    """문제 하나를 sympy 코드로 다시 풀어 주장한 답과 비교한다.
-    problem_code: 문제 조건만으로 답을 계산하고 마지막에 result 변수에 넣는 파이썬 코드.
-    claimed_answer: 확인할 답 (예: "12", "sqrt(2)/2", "[2, -5]").
-    tolerance: 소수 답 허용 오차 (0이면 정확히 같아야 함)."""
-    return _check_answer(problem_code, claimed_answer, tolerance or None).to_dict()
+def check_math_only(spec_path: str = "", spec_yaml: str = "", lang: str = "") -> dict:
+    """Check only the answers of a quiz spec (fast, no PDF)."""
+    spec, _, err = _load(spec_path, spec_yaml)
+    return (err or verify_spec_math(spec)).to_dict(lang or None)
 
 
 @mcp.tool()
-def check_latex_file(tex_path: str) -> dict:
-    """이미 있는 .tex 파일을 컴파일해 인쇄 오류(컴파일 오류, 여백 넘침, 빠진 글자, 잘린 그림, 빈 페이지)를 검사한다."""
+def check_answer(problem_code: str, claimed_answer: str, tolerance: float = 0.0, lang: str = "") -> dict:
+    """Re-solve one problem with sympy and compare with a claimed answer.
+    problem_code: Python using only the problem's conditions; must set `result`.
+    claimed_answer: e.g. "12", "sqrt(2)/2", "[2, -5]".
+    tolerance: allowed absolute error for decimal answers (0 = exact)."""
+    return _check_answer(problem_code, claimed_answer, tolerance or None).to_dict(lang or None)
+
+
+@mcp.tool()
+def check_latex_file(tex_path: str, lang: str = "") -> dict:
+    """Compile an existing .tex file and report print problems (compile errors, overfull lines,
+    missing glyphs, clipped figures, blank pages)."""
     rep, pdf, pages = check_tex(Path(tex_path))
-    return {**rep.to_dict(), "pdf": str(pdf) if pdf else None, "pages": [str(p) for p in pages]}
+    return {**rep.to_dict(lang or None), "pdf": str(pdf) if pdf else None, "pages": [str(p) for p in pages]}
 
 
 @mcp.tool()
-def check_scope_only(spec_path: str) -> dict:
-    """정해진 단원 범위 밖 개념이 문제나 해설에 쓰였는지 검사한다."""
-    return check_scope(load_spec(spec_path)).to_dict()
+def check_scope_only(spec_path: str = "", spec_yaml: str = "", lang: str = "") -> dict:
+    """Check whether concepts outside the selected chapters appear in questions or solutions."""
+    spec, _, err = _load(spec_path, spec_yaml)
+    return (err or check_scope(spec)).to_dict(lang or None)
 
 
 @mcp.tool()
-def list_chapters(curriculum: str = "igcse_0580") -> dict:
-    """교육과정의 단원 코드와 제목 목록. 퀴즈 사양의 chapters에 이 코드를 쓴다."""
+def list_available_curricula() -> dict:
+    """Curriculum codes usable in a spec's `curriculum` field (e.g. igcse_0580, ib_aa, ap_calculus, caie_9709)."""
+    return list_curricula()
+
+
+@mcp.tool()
+def list_chapters(curriculum: str) -> dict:
+    """Chapter codes and titles of a curriculum; use these codes in the spec's `chapters` list."""
     cur = load_curriculum(curriculum)
     return {k: v.get("title", k) for k, v in cur["chapters"].items()}
 
