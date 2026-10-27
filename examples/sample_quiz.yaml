@@ -1,0 +1,59 @@
+# 예시 퀴즈 사양. 학생 이름 같은 개인정보는 이 저장소(공개)에 넣지 않는다.
+title: "Review Quiz: Quadratics"
+curriculum: igcse_0580
+chapters: [algebra_basic, quadratics]
+total_marks: 10
+questions:
+  - id: 1
+    marks: 2
+    text: |
+      Solve $x^2 + 3x - 10 = 0$.
+    check: |
+      result = solve(x**2 + 3*x - 10, x)
+    expected: [2, -5]
+    final_answer: "$x = 2$ or $x = -5$"
+    solution: |
+      Factorise: $(x+5)(x-2) = 0$, so $x = -5$ or $x = 2$.
+    trap: "Writing $x = 5$ and $x = -2$ by mixing up the signs in the brackets."
+  - id: 2
+    marks: 3
+    text: |
+      Write $x^2 - 8x + 3$ in the form $(x - p)^2 - q$, and state the minimum value of $x^2 - 8x + 3$.
+    check: |
+      expr = x**2 - 8*x + 3
+      p_ = Rational(8, 2)
+      q_ = -(expr.subs(x, p_))
+      result = [p_, q_, expr.subs(x, p_)]
+    expected: [4, 13, -13]
+    final_answer: "$(x-4)^2 - 13$; minimum value $-13$"
+    solution: |
+      $x^2 - 8x + 3 = (x-4)^2 - 16 + 3 = (x-4)^2 - 13$, so $p = 4$, $q = 13$.
+      Since $(x-4)^2 \ge 0$, the minimum value is $-13$ (when $x = 4$).
+    trap: "Forgetting to subtract $4^2 = 16$ after writing $(x-4)^2$."
+  - id: 3
+    marks: 3
+    text: |
+      Solve $2x^2 - 5x - 4 = 0$. Give your answers correct to 2 decimal places.
+    check: |
+      result = [N(r) for r in solve(2*x**2 - 5*x - 4, x)]
+    expected: [3.14, -0.64]
+    tolerance: 0.005
+    final_answer: "$x = 3.14$ or $x = -0.64$"
+    solution: |
+      $x = \dfrac{5 \pm \sqrt{25 + 32}}{4} = \dfrac{5 \pm \sqrt{57}}{4}$,
+      so $x = 3.14$ or $x = -0.64$ (2 d.p.).
+    trap: "Using $\\sqrt{25 - 32}$: the constant term is $-4$, so $-4ac = +32$."
+  - id: 4
+    marks: 2
+    text: |
+      The area of a rectangle is $40\,\text{cm}^2$. Its length is $3\,\text{cm}$ more than its width $w\,\text{cm}$.
+      Find $w$.
+    check: |
+      sols = [s for s in solve(x*(x + 3) - 40, x) if s > 0]
+      result = sols[0]
+    expected: 5
+    final_answer: "$w = 5$"
+    solution: |
+      $w(w + 3) = 40 \Rightarrow w^2 + 3w - 40 = 0 \Rightarrow (w + 8)(w - 5) = 0$.
+      Width is positive, so $w = 5$.
+    trap: "Keeping $w = -8$: a length cannot be negative."

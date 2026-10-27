@@ -1,0 +1,53 @@
+# Cambridge IGCSE Mathematics 0580 (Extended) 단원 목록.
+# keywords: 그 단원에서 처음 나오는 개념의 단어·LaTeX 명령. 다른 단원만 고른 퀴즈에 나오면 '범위 밖'으로 잡힌다.
+# 필요하면 단원을 쪼개거나 키워드를 추가해서 쓴다.
+name: Cambridge IGCSE Mathematics 0580 Extended
+chapters:
+  number:
+    title: Number (types, indices, standard form, bounds, percentages)
+    keywords: [standard form, upper bound, lower bound, compound interest]
+  algebra_basic:
+    title: Algebra - expressions, linear equations, factorising
+    keywords: []  # 기초 대수는 다른 단원의 바탕이라 키워드로 막지 않음
+  quadratics:
+    title: Algebra - quadratics
+    keywords: [quadratic, completing the square, discriminant, quadratic formula]
+  inequalities:
+    title: Algebra - inequalities and linear programming
+    keywords: [inequality, inequalities, "\\leqslant", "\\geqslant", linear programming]
+  sequences:
+    title: Sequences
+    keywords: [nth term, sequence, term-to-term]
+  functions:
+    title: Functions (notation, composite, inverse)
+    keywords: [inverse function, composite function, "f^{-1}", fg(x), gf(x)]
+  graphs:
+    title: Graphs of functions, gradients
+    keywords: [asymptote, turning point, tangent to the curve]
+  differentiation:
+    title: Differentiation
+    keywords: [differentiate, derivative, "\\frac{dy}{dx}", "dy/dx", stationary point, gradient function]
+  coordinate_geometry:
+    title: Coordinate geometry
+    keywords: [midpoint, perpendicular bisector, gradient of the line]
+  geometry:
+    title: Geometry (angles, circle theorems, similarity, congruence)
+    keywords: [circle theorem, cyclic quadrilateral, alternate segment, congruent, similar triangles]
+  mensuration:
+    title: Mensuration (area, volume, arcs, sectors)
+    keywords: [sector, arc length, frustum, hemisphere, surface area, volume]
+  trigonometry:
+    title: Trigonometry (right-angled, sine/cosine rule, 3D, graphs)
+    keywords: [sine rule, cosine rule, bearing, "\\sin", "\\cos", "\\tan", angle of elevation]
+  transformations_vectors:
+    title: Transformations and vectors
+    keywords: [vector, reflection, rotation, enlargement, translation, column vector, magnitude]
+  probability:
+    title: Probability
+    keywords: [probability, tree diagram, independent events, mutually exclusive]
+  statistics:
+    title: Statistics
+    keywords: [the mean, median, interquartile range, histogram, cumulative frequency, frequency density]
+  sets:
+    title: Sets and Venn diagrams
+    keywords: [venn diagram, "\\cap", "\\cup", universal set]

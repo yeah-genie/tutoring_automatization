@@ -8,3 +8,9 @@ downloads/
 tutoring.db
 venv/
 .venv/
+# mathcheck 산출물 / 학생 데이터 (공개 저장소에 올리지 않음)
+build/
+bank.jsonl
+logs/
+*.csv
+!examples/*.csv
