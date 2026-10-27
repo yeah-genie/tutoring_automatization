@@ -159,7 +159,7 @@ def _pretty(v, sf=None, dp=None):
 
 
 # ---------- syllabus scope ----------
-RAW = "https://raw.githubusercontent.com/yeah-genie/tutoring_automatization/main/integrations/engine"
+RAW = "https://raw.githubusercontent.com/yeah-genie/tutoring_automatization/HEAD/integrations/engine"
 
 
 def load_curricula() -> dict:

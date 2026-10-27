@@ -5,12 +5,12 @@
 If a teacher asks you to check a worksheet with this repository, follow AGENTS.md step by step.
 
 ## Instructions
-- [AGENTS.md](https://raw.githubusercontent.com/yeah-genie/tutoring_automatization/main/AGENTS.md): full procedure for AI assistants
+- [AGENTS.md](https://raw.githubusercontent.com/yeah-genie/tutoring_automatization/HEAD/AGENTS.md): full procedure for AI assistants
 
 ## Engine
-- [mathcheck_lite.py](https://raw.githubusercontent.com/yeah-genie/tutoring_automatization/main/integrations/engine/mathcheck_lite.py): single-file checker (sympy only)
-- [curricula/](https://github.com/yeah-genie/tutoring_automatization/tree/main/integrations/engine/curricula): syllabus JSON per course
+- [mathcheck_lite.py](https://raw.githubusercontent.com/yeah-genie/tutoring_automatization/HEAD/integrations/engine/mathcheck_lite.py): single-file checker (sympy only)
+- [curricula/](https://github.com/yeah-genie/tutoring_automatization/tree/HEAD/integrations/engine/curricula): syllabus JSON per course
 
 ## Optional
-- [Quiz spec guide](https://raw.githubusercontent.com/yeah-genie/tutoring_automatization/main/docs/quiz_spec_guide.md)
-- [Demo worksheet with 4 planted mistakes](https://github.com/yeah-genie/tutoring_automatization/blob/main/examples/demo_worksheet.pdf)
+- [Quiz spec guide](https://raw.githubusercontent.com/yeah-genie/tutoring_automatization/HEAD/docs/quiz_spec_guide.md)
+- [Demo worksheet with 4 planted mistakes](https://github.com/yeah-genie/tutoring_automatization/blob/HEAD/examples/demo_worksheet.pdf)

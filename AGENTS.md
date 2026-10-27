@@ -4,7 +4,7 @@ A teacher may give you this repository's URL together with a maths worksheet, te
 ask you to "check it". This file tells you how. Follow it step by step. Reply in the teacher's language.
 
 Base URL for raw files:
-`https://raw.githubusercontent.com/yeah-genie/tutoring_automatization/main`
+`https://raw.githubusercontent.com/yeah-genie/tutoring_automatization/HEAD`
 
 | File | Use |
 |---|---|
@@ -12,7 +12,7 @@ Base URL for raw files:
 | `integrations/engine/curricula/<code>.json` | syllabus data: `igcse_0580`, `ib_aa`, `ib_ai`, `ap_calculus`, `ap_precalculus`, `ap_statistics`, `caie_9709` |
 | `examples/demo_worksheet.pdf` | test worksheet with 4 planted mistakes (Q2 rounding, Q4 key, Q5 HL-only on SL sheet, total 20 ≠ 19) |
 
-SHA-256 of mathcheck_lite.py: `1f12fd6cc86eebc4c5a98085f1b9caf7e28e0b638157b112abcb12be78628f24`
+SHA-256 of mathcheck_lite.py: `f6771b431b827e19c13e7afe7400b79432555fa232b7ea0327da0bd6007cd055`
 
 ---
 
@@ -41,7 +41,7 @@ Pick the first option that works.
 1. **Your sandbox has internet** (Claude, Claude Code, most agents):
    ```python
    import urllib.request, json, sys
-   B = "https://raw.githubusercontent.com/yeah-genie/tutoring_automatization/main/integrations/engine"
+   B = "https://raw.githubusercontent.com/yeah-genie/tutoring_automatization/HEAD/integrations/engine"
    urllib.request.urlretrieve(B + "/mathcheck_lite.py", "mathcheck_lite.py")
    cur = json.loads(urllib.request.urlopen(B + "/curricula/ib_aa.json").read())
    sys.path.insert(0, "."); import mathcheck_lite as mc
