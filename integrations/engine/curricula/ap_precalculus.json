@@ -1,0 +1,72 @@
+{
+ "name": "AP Precalculus",
+ "board": "College Board AP",
+ "cumulative": true,
+ "chapters": {
+  "u1_polynomial_rational": {
+   "title": "Unit 1 Polynomial and Rational Functions",
+   "keywords": [
+    "average rate of change",
+    "end behavior",
+    "rational function",
+    "vertical asymptote",
+    "horizontal asymptote",
+    "slant asymptote",
+    "binomial theorem",
+    "polynomial long division",
+    "multiplicity"
+   ]
+  },
+  "u2_exponential_log": {
+   "title": "Unit 2 Exponential and Logarithmic Functions",
+   "keywords": [
+    "arithmetic sequence",
+    "geometric sequence",
+    "exponential function",
+    "logarithm",
+    "\\log",
+    "\\ln",
+    "inverse function",
+    "semi-log",
+    "composition"
+   ]
+  },
+  "u3_trig_polar": {
+   "title": "Unit 3 Trigonometric and Polar Functions",
+   "keywords": [
+    "\\sin",
+    "\\cos",
+    "\\tan",
+    "radian",
+    "unit circle",
+    "sinusoidal",
+    "amplitude",
+    "period",
+    "phase shift",
+    "\\sec",
+    "\\csc",
+    "\\cot",
+    "polar",
+    "\\arcsin",
+    "\\arccos",
+    "\\arctan"
+   ]
+  },
+  "u4_parameters_vectors_matrices": {
+   "title": "Unit 4 Functions Involving Parameters, Vectors, and Matrices (not on the AP exam)",
+   "keywords": [
+    "parametric",
+    "implicitly defined",
+    "conic",
+    "ellipse",
+    "hyperbola",
+    "vector",
+    "matrix",
+    "matrices",
+    "determinant",
+    "\\begin{pmatrix}",
+    "\\begin{bmatrix}"
+   ]
+  }
+ }
+}

@@ -1,0 +1,223 @@
+{
+ "name": "IB Mathematics Applications and Interpretation (SL/HL)",
+ "board": "IB",
+ "syllabus_version": "first assessment 2021",
+ "chapters": {
+  "number_algebra": {
+   "title": "1 Number and algebra (SL): standard form, sequences, financial maths, logs, approximation and error",
+   "level": "SL",
+   "keywords": [
+    "standard form",
+    "arithmetic sequence",
+    "geometric sequence",
+    "compound interest",
+    "annuity",
+    "amortization",
+    "amortisation",
+    "percentage error",
+    "upper bound",
+    "lower bound",
+    "logarithm"
+   ]
+  },
+  "functions": {
+   "title": "2 Functions (SL): linear, quadratic, exponential, cubic, sinusoidal models; modelling",
+   "requires": [
+    "number_algebra"
+   ],
+   "level": "SL",
+   "keywords": [
+    "inverse function",
+    "f^{-1}",
+    "exponential model",
+    "sinusoidal model",
+    "direct variation",
+    "inverse variation"
+   ]
+  },
+  "geometry_trig": {
+   "title": "3 Geometry and trigonometry (SL): 3D solids, trig, sine/cosine rule, bearings, Voronoi diagrams",
+   "level": "SL",
+   "keywords": [
+    "sine rule",
+    "cosine rule",
+    "bearing",
+    "angle of elevation",
+    "angle of depression",
+    "voronoi",
+    "perpendicular bisector",
+    "\\sin",
+    "\\cos",
+    "\\tan"
+   ]
+  },
+  "stats_prob": {
+   "title": "4 Statistics and probability (SL): data, regression, Spearman, probability, binomial and normal, chi-squared, t-test",
+   "requires": [
+    "number_algebra"
+   ],
+   "level": "SL",
+   "keywords": [
+    "standard deviation",
+    "interquartile range",
+    "regression line",
+    "pearson",
+    "spearman",
+    "correlation coefficient",
+    "conditional probability",
+    "binomial distribution",
+    "normal distribution",
+    "chi-squared",
+    "\\chi^2",
+    "t-test",
+    "null hypothesis",
+    "p-value",
+    "random variable",
+    "expected value"
+   ]
+  },
+  "calculus": {
+   "title": "5 Calculus (SL): gradient, differentiation of polynomials, tangents, optimisation, integration of polynomials, trapezium rule",
+   "requires": [
+    "number_algebra",
+    "functions",
+    "geometry_trig"
+   ],
+   "level": "SL",
+   "keywords": [
+    "derivative",
+    "differentiate",
+    "\\frac{d",
+    "\\frac{\\mathrm{d}",
+    "\\int",
+    "integral",
+    "stationary point",
+    "optimisation",
+    "optimization",
+    "trapezoidal rule",
+    "trapezium rule",
+    "tangent line"
+   ]
+  },
+  "hl_number_algebra": {
+   "title": "AHL 1: laws of logs, complex numbers, matrices, eigenvalues",
+   "requires": [
+    "number_algebra",
+    "functions",
+    "geometry_trig",
+    "stats_prob",
+    "calculus"
+   ],
+   "level": "HL",
+   "keywords": [
+    "complex number",
+    "argand",
+    "euler form",
+    "matrix",
+    "matrices",
+    "determinant",
+    "inverse matrix",
+    "eigenvalue",
+    "eigenvector",
+    "\\begin{pmatrix}"
+   ]
+  },
+  "hl_functions": {
+   "title": "AHL 2: composite transformations, logistic and further models, log linearisation",
+   "requires": [
+    "number_algebra",
+    "functions",
+    "geometry_trig",
+    "stats_prob",
+    "calculus"
+   ],
+   "level": "HL",
+   "keywords": [
+    "logistic",
+    "linearis",
+    "linearize",
+    "\\ln y",
+    "log-log",
+    "semi-log"
+   ]
+  },
+  "hl_geometry_trig": {
+   "title": "AHL 3: radians, vectors, graph theory, transformation matrices",
+   "requires": [
+    "number_algebra",
+    "functions",
+    "geometry_trig",
+    "stats_prob",
+    "calculus"
+   ],
+   "level": "HL",
+   "keywords": [
+    "radian",
+    "vector",
+    "scalar product",
+    "vector product",
+    "graph theory",
+    "adjacency matrix",
+    "spanning tree",
+    "kruskal",
+    "prim's",
+    "chinese postman",
+    "travelling salesman",
+    "eulerian",
+    "hamiltonian",
+    "transformation matrix"
+   ]
+  },
+  "hl_stats_prob": {
+   "title": "AHL 4: linear combinations of random variables, Poisson, Markov chains, hypothesis tests, confidence intervals",
+   "requires": [
+    "number_algebra",
+    "functions",
+    "geometry_trig",
+    "stats_prob",
+    "calculus",
+    "hl_number_algebra"
+   ],
+   "level": "HL",
+   "keywords": [
+    "poisson",
+    "markov",
+    "transition matrix",
+    "steady state",
+    "confidence interval",
+    "unbiased estimate",
+    "linear combination of",
+    "non-linear regression",
+    "coefficient of determination"
+   ]
+  },
+  "hl_calculus": {
+   "title": "AHL 5: further differentiation, integration techniques, volumes, kinematics, differential equations, slope fields, coupled systems",
+   "requires": [
+    "number_algebra",
+    "functions",
+    "geometry_trig",
+    "stats_prob",
+    "calculus",
+    "hl_number_algebra",
+    "hl_functions",
+    "hl_geometry_trig"
+   ],
+   "level": "HL",
+   "keywords": [
+    "chain rule",
+    "product rule",
+    "quotient rule",
+    "related rates",
+    "volume of revolution",
+    "differential equation",
+    "slope field",
+    "euler's method",
+    "euler’s method",
+    "phase portrait",
+    "coupled",
+    "second derivative test"
+   ]
+  }
+ }
+}

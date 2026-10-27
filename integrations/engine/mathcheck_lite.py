@@ -159,9 +159,23 @@ def _pretty(v, sf=None, dp=None):
 
 
 # ---------- syllabus scope ----------
+RAW = "https://raw.githubusercontent.com/yeah-genie/tutoring_automatization/main/integrations/engine"
+
+
 def load_curricula() -> dict:
-    with open(os.path.join(HERE, "curricula.json"), encoding="utf-8") as f:
-        return json.load(f)
+    """All curricula from curricula.json next to this file, or the curricula/ folder, or {}."""
+    path = os.path.join(HERE, "curricula.json")
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    out = {}
+    folder = os.path.join(HERE, "curricula")
+    if os.path.isdir(folder):
+        for name in sorted(os.listdir(folder)):
+            if name.endswith(".json"):
+                with open(os.path.join(folder, name), encoding="utf-8") as f:
+                    out[name[:-5]] = json.load(f)
+    return out
 
 
 def list_curricula() -> dict:
@@ -184,11 +198,17 @@ def _allowed(cur: dict, selected: set) -> set:
     return out
 
 
-def check_scope(questions: list, curriculum: str, chapters: list) -> list:
-    curs = load_curricula()
-    if curriculum not in curs:
-        return [{"id": "-", "problem": f"unknown curriculum '{curriculum}'. Available: {', '.join(curs)}"}]
-    cur = curs[curriculum]
+def check_scope(questions: list, curriculum, chapters: list) -> list:
+    """curriculum: a code like "ib_aa" (looked up locally) or the curriculum dict itself
+    (e.g. json.loads of RAW + "/curricula/ib_aa.json", for sandboxes without the data file)."""
+    if isinstance(curriculum, dict):
+        cur = curriculum
+    else:
+        curs = load_curricula()
+        if curriculum not in curs:
+            return [{"id": "-", "problem": f"curriculum '{curriculum}' not available here "
+                     f"(have: {', '.join(curs) or 'none'}); pass the curriculum dict instead, see {RAW}/curricula/"}]
+        cur = curs[curriculum]
     unknown = [c for c in chapters if c not in cur["chapters"]]
     found = [{"id": "-", "problem": f"unknown chapter code '{c}'"} for c in unknown]
     allowed = _allowed(cur, set(chapters))
@@ -209,7 +229,7 @@ def check_scope(questions: list, curriculum: str, chapters: list) -> list:
 
 
 # ---------- whole worksheet ----------
-def check_worksheet(questions: list, curriculum: str | None = None, chapters: list | None = None,
+def check_worksheet(questions: list, curriculum=None, chapters: list | None = None,
                     total_marks: int | None = None) -> dict:
     results = [check_question(q) for q in questions]
     rep = {"questions": results, "scope": [], "marks": None}

@@ -1,5 +1,11 @@
 # mathcheck
 
+> **AI assistants:** if a teacher gave you this link and a worksheet to check, follow
+> [AGENTS.md](https://raw.githubusercontent.com/yeah-genie/tutoring_automatization/main/AGENTS.md).
+>
+> **Teachers:** paste this into ChatGPT or Claude and attach your worksheet:
+> *"Check this worksheet and its answer key using https://github.com/yeah-genie/tutoring_automatization"*
+
 **A second pair of eyes for maths worksheets made with AI.**
 
 AI assistants can write a quiz in seconds, but they also get answers wrong, print a different

@@ -1,4 +1,12 @@
-# ChatGPT GPT 만들기 (예진 계정에서 10분)
+# ChatGPT에서 쓰기
+
+## 방법 1: 아무 설정 없이 (GPT 안 만들어도 됨)
+ChatGPT(웹 검색 켜진 상태)에 워크시트를 첨부하고:
+> Check this worksheet and its answer key using https://github.com/yeah-genie/tutoring_automatization
+
+ChatGPT가 README → AGENTS.md를 읽고 그 절차대로 검사한다. 엔진 파일은 ChatGPT가 직접 GitHub에서 읽어 온다(코드 실행 환경은 인터넷이 안 되므로, AGENTS.md에 "읽어서 옮기고 해시로 확인" 절차가 있음).
+
+## 방법 2: GPT로 만들기 (스토어 공개용, 10분)
 
 1. chatgpt.com → 왼쪽 **GPT** → **+ 만들기** → 위쪽 **구성(Configure)** 탭
 2. 아래 값을 그대로 붙여넣기

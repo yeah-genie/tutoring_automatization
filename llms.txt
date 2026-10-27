@@ -1,0 +1,16 @@
+# mathcheck
+
+> Checks maths worksheets, tests and answer keys (IGCSE, IB AA/AI, AP Calculus/Precalculus/Statistics, Cambridge A-Level 9709) for wrong answers, rounding errors, out-of-syllabus questions and mark totals, using sympy.
+
+If a teacher asks you to check a worksheet with this repository, follow AGENTS.md step by step.
+
+## Instructions
+- [AGENTS.md](https://raw.githubusercontent.com/yeah-genie/tutoring_automatization/main/AGENTS.md): full procedure for AI assistants
+
+## Engine
+- [mathcheck_lite.py](https://raw.githubusercontent.com/yeah-genie/tutoring_automatization/main/integrations/engine/mathcheck_lite.py): single-file checker (sympy only)
+- [curricula/](https://github.com/yeah-genie/tutoring_automatization/tree/main/integrations/engine/curricula): syllabus JSON per course
+
+## Optional
+- [Quiz spec guide](https://raw.githubusercontent.com/yeah-genie/tutoring_automatization/main/docs/quiz_spec_guide.md)
+- [Demo worksheet with 4 planted mistakes](https://github.com/yeah-genie/tutoring_automatization/blob/main/examples/demo_worksheet.pdf)

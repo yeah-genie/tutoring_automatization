@@ -1,0 +1,425 @@
+{
+ "name": "Cambridge International AS & A Level Mathematics 9709",
+ "board": "Cambridge International",
+ "syllabus_version": "2026-2027",
+ "chapters": {
+  "p1_quadratics": {
+   "title": "P1 1.1 Quadratics",
+   "keywords": [
+    "completing the square",
+    "discriminant",
+    "quadratic formula"
+   ]
+  },
+  "p1_functions": {
+   "title": "P1 1.2 Functions",
+   "keywords": [
+    "composite function",
+    "inverse function",
+    "f^{-1}",
+    "one-one",
+    "range of f",
+    "domain of f"
+   ]
+  },
+  "p1_coordinate_geometry": {
+   "title": "P1 1.3 Coordinate geometry (lines and circles)",
+   "keywords": [
+    "perpendicular bisector",
+    "equation of the circle",
+    "equation of a circle",
+    "midpoint"
+   ]
+  },
+  "p1_circular_measure": {
+   "title": "P1 1.4 Circular measure",
+   "keywords": [
+    "radian",
+    "arc length",
+    "area of the sector",
+    "sector"
+   ]
+  },
+  "p1_trigonometry": {
+   "title": "P1 1.5 Trigonometry",
+   "requires": [
+    "p1_circular_measure"
+   ],
+   "keywords": [
+    "\\sin",
+    "\\cos",
+    "\\tan",
+    "\\sin^{-1}",
+    "\\cos^{-1}",
+    "\\tan^{-1}",
+    "trigonometric identity"
+   ]
+  },
+  "p1_series": {
+   "title": "P1 1.6 Series (binomial expansion for positive integer n, arithmetic and geometric progressions)",
+   "keywords": [
+    "binomial expansion",
+    "\\binom",
+    "arithmetic progression",
+    "geometric progression",
+    "sum to infinity",
+    "common ratio"
+   ]
+  },
+  "p1_differentiation": {
+   "title": "P1 1.7 Differentiation",
+   "requires": [
+    "p1_quadratics",
+    "p1_functions",
+    "p1_coordinate_geometry"
+   ],
+   "keywords": [
+    "differentiate",
+    "derivative",
+    "\\frac{dy}{dx}",
+    "\\frac{\\mathrm{d}y}{\\mathrm{d}x}",
+    "dy/dx",
+    "stationary point",
+    "chain rule",
+    "rate of change",
+    "gradient of the curve",
+    "tangent to the curve",
+    "normal to the curve"
+   ]
+  },
+  "p1_integration": {
+   "title": "P1 1.8 Integration",
+   "requires": [
+    "p1_differentiation",
+    "p1_quadratics",
+    "p1_functions",
+    "p1_coordinate_geometry"
+   ],
+   "keywords": [
+    "\\int",
+    "integrate",
+    "integral",
+    "area under",
+    "volume of revolution",
+    "volume obtained"
+   ]
+  },
+  "p3_algebra": {
+   "title": "P3 3.1 Algebra: modulus, polynomial division, factor/remainder theorem, partial fractions, binomial for rational n",
+   "requires": [
+    "p1_quadratics",
+    "p1_functions",
+    "p1_series"
+   ],
+   "keywords": [
+    "modulus",
+    "|x",
+    "factor theorem",
+    "remainder theorem",
+    "partial fraction",
+    "polynomial division",
+    "(1+x)^{-",
+    "(1 + x)^{-"
+   ]
+  },
+  "p3_log_exp": {
+   "title": "P3 3.2 Logarithmic and exponential functions",
+   "keywords": [
+    "\\ln",
+    "\\log",
+    "logarithm",
+    "e^{x}",
+    "e^x",
+    "exponential"
+   ]
+  },
+  "p3_trigonometry": {
+   "title": "P3 3.3 Trigonometry: sec, cosec, cot, compound and double angles, R cos(x - a)",
+   "requires": [
+    "p1_trigonometry",
+    "p1_circular_measure"
+   ],
+   "keywords": [
+    "\\sec",
+    "\\csc",
+    "\\cosec",
+    "\\cot",
+    "compound angle",
+    "double angle",
+    "R\\cos",
+    "R \\cos",
+    "R\\sin",
+    "R \\sin"
+   ]
+  },
+  "p3_differentiation": {
+   "title": "P3 3.4 Differentiation: product, quotient, implicit, parametric; e^x, ln x, trig",
+   "requires": [
+    "p1_differentiation",
+    "p3_log_exp",
+    "p3_trigonometry"
+   ],
+   "keywords": [
+    "product rule",
+    "quotient rule",
+    "implicit",
+    "parametric"
+   ]
+  },
+  "p3_integration": {
+   "title": "P3 3.5 Integration: e^x, 1/x, trig, partial fractions, substitution, by parts, trapezium rule",
+   "requires": [
+    "p1_integration",
+    "p3_differentiation",
+    "p3_algebra"
+   ],
+   "keywords": [
+    "integration by parts",
+    "by parts",
+    "substitution",
+    "trapezium rule"
+   ]
+  },
+  "p3_numerical": {
+   "title": "P3 3.6 Numerical solution of equations",
+   "keywords": [
+    "iteration",
+    "iterative formula",
+    "change of sign",
+    "sign change",
+    "x_{n+1}"
+   ]
+  },
+  "p3_vectors": {
+   "title": "P3 3.7 Vectors",
+   "keywords": [
+    "vector",
+    "scalar product",
+    "position vector",
+    "\\overrightarrow",
+    "vector equation",
+    "skew",
+    "\\mathbf{i}"
+   ]
+  },
+  "p3_differential_equations": {
+   "title": "P3 3.8 Differential equations",
+   "requires": [
+    "p3_integration"
+   ],
+   "keywords": [
+    "differential equation",
+    "separating the variables",
+    "general solution",
+    "particular solution"
+   ]
+  },
+  "p3_complex": {
+   "title": "P3 3.9 Complex numbers",
+   "keywords": [
+    "complex number",
+    "argand",
+    "modulus-argument",
+    "conjugate",
+    "\\arg",
+    "\\mathrm{i}",
+    "\\operatorname{Re}",
+    "\\operatorname{Im}"
+   ]
+  },
+  "m1_forces": {
+   "title": "M1 4.1 Forces and equilibrium",
+   "keywords": [
+    "equilibrium",
+    "resultant force",
+    "friction",
+    "coefficient of friction",
+    "normal reaction",
+    "limiting",
+    "tension"
+   ]
+  },
+  "m1_kinematics": {
+   "title": "M1 4.2 Kinematics of motion in a straight line",
+   "keywords": [
+    "velocity",
+    "acceleration",
+    "displacement",
+    "velocity-time graph",
+    "constant acceleration",
+    "suvat"
+   ]
+  },
+  "m1_momentum": {
+   "title": "M1 4.3 Momentum",
+   "keywords": [
+    "momentum",
+    "collision",
+    "coalesce",
+    "impulse"
+   ]
+  },
+  "m1_newton": {
+   "title": "M1 4.4 Newton's laws of motion",
+   "requires": [
+    "m1_forces",
+    "m1_kinematics"
+   ],
+   "keywords": [
+    "newton's second law",
+    "newton’s second law",
+    "connected particles",
+    "pulley",
+    "F = ma",
+    "F=ma"
+   ]
+  },
+  "m1_energy": {
+   "title": "M1 4.5 Energy, work and power",
+   "requires": [
+    "m1_forces",
+    "m1_kinematics"
+   ],
+   "keywords": [
+    "work done",
+    "kinetic energy",
+    "potential energy",
+    "power",
+    "watt",
+    "work-energy"
+   ]
+  },
+  "s1_data": {
+   "title": "S1 5.1 Representation of data",
+   "keywords": [
+    "stem-and-leaf",
+    "box-and-whisker",
+    "cumulative frequency",
+    "histogram",
+    "interquartile range",
+    "standard deviation"
+   ]
+  },
+  "s1_perms_combs": {
+   "title": "S1 5.2 Permutations and combinations",
+   "keywords": [
+    "permutation",
+    "combination",
+    "arrangements",
+    "^nC_r",
+    "\\binom",
+    "^nP_r"
+   ]
+  },
+  "s1_probability": {
+   "title": "S1 5.3 Probability",
+   "keywords": [
+    "conditional probability",
+    "independent events",
+    "mutually exclusive",
+    "tree diagram"
+   ]
+  },
+  "s1_discrete_rv": {
+   "title": "S1 5.4 Discrete random variables (binomial, geometric)",
+   "requires": [
+    "s1_probability"
+   ],
+   "keywords": [
+    "random variable",
+    "probability distribution",
+    "binomial distribution",
+    "geometric distribution",
+    "B(",
+    "\\mathrm{Geo}",
+    "E(X)",
+    "Var(X)"
+   ]
+  },
+  "s1_normal": {
+   "title": "S1 5.5 The normal distribution",
+   "requires": [
+    "s1_probability",
+    "s1_discrete_rv"
+   ],
+   "keywords": [
+    "normal distribution",
+    "N(",
+    "standardise",
+    "standardize",
+    "continuity correction",
+    "\\Phi"
+   ]
+  },
+  "s2_poisson": {
+   "title": "S2 6.1 The Poisson distribution",
+   "requires": [
+    "s1_probability",
+    "s1_discrete_rv",
+    "s1_normal"
+   ],
+   "keywords": [
+    "poisson",
+    "\\mathrm{Po}",
+    "Po("
+   ]
+  },
+  "s2_linear_combinations": {
+   "title": "S2 6.2 Linear combinations of random variables",
+   "requires": [
+    "s1_discrete_rv",
+    "s1_normal",
+    "s2_poisson"
+   ],
+   "keywords": [
+    "linear combination",
+    "E(aX",
+    "Var(aX"
+   ]
+  },
+  "s2_continuous_rv": {
+   "title": "S2 6.3 Continuous random variables",
+   "requires": [
+    "s1_discrete_rv"
+   ],
+   "keywords": [
+    "probability density function",
+    "pdf",
+    "continuous random variable"
+   ]
+  },
+  "s2_sampling_estimation": {
+   "title": "S2 6.4 Sampling and estimation",
+   "requires": [
+    "s1_normal",
+    "s1_data"
+   ],
+   "keywords": [
+    "unbiased estimate",
+    "confidence interval",
+    "sample mean",
+    "central limit theorem",
+    "random sample"
+   ]
+  },
+  "s2_hypothesis_tests": {
+   "title": "S2 6.5 Hypothesis tests",
+   "requires": [
+    "s1_discrete_rv",
+    "s1_normal",
+    "s2_poisson",
+    "s2_sampling_estimation"
+   ],
+   "keywords": [
+    "null hypothesis",
+    "alternative hypothesis",
+    "significance level",
+    "critical region",
+    "type i error",
+    "type ii error",
+    "H_0",
+    "H_1"
+   ]
+  }
+ }
+}

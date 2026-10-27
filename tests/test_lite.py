@@ -50,7 +50,30 @@ def test_answer_formats():
     assert mc.check_question({"id": 1, "check": "y = 2", "answer_key": "2"})["verdict"] == "check_failed"
 
 
+def test_engine_alone_with_curriculum_dict():
+    """What an AI does in a bare sandbox: only the .py file, curriculum passed as a dict."""
+    import json, shutil, subprocess, tempfile
+    with tempfile.TemporaryDirectory() as d:
+        shutil.copy(ROOT / "integrations" / "engine" / "mathcheck_lite.py", d)
+        cur = (ROOT / "integrations" / "engine" / "curricula" / "ib_aa.json").read_text(encoding="utf-8")
+        code = ("import json, mathcheck_lite as mc\n"
+                f"cur = json.loads({cur!r})\n"
+                f"qs = {DEMO!r}\n"
+                "rep = mc.check_worksheet(qs, curriculum=cur, chapters=['calculus'], total_marks=20)\n"
+                "print(sorted(q['id'] for q in rep['questions'] if q['verdict']=='wrong_key'), [s['id'] for s in rep['scope']])")
+        out = subprocess.run([sys.executable, "-c", code], cwd=d, capture_output=True, text=True, check=True).stdout
+        assert out.strip() == "['2', '4'] ['5']", out
+
+
+def test_agents_md_hash_matches():
+    import hashlib, re
+    digest = hashlib.sha256((ROOT / "integrations" / "engine" / "mathcheck_lite.py").read_bytes()).hexdigest()
+    assert digest in (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+
+
 if __name__ == "__main__":
+    test_engine_alone_with_curriculum_dict()
+    test_agents_md_hash_matches()
     test_demo_worksheet()
     test_answer_formats()
     print("통과 test_lite")
